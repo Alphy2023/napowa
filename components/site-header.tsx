@@ -40,7 +40,7 @@ export function SiteHeader() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm" 
-        : "bg-transparent",
+        : "bg-background/95",
       )}
     >
       <div className="container flex h-16 items-center justify-between py-4">
@@ -77,7 +77,7 @@ export function SiteHeader() {
           </Button>
 
           <Button asChild variant="outline" className="hidden sm:flex">
-            <Link href="/login">Login</Link>
+            <Link href="/auth/login">Login</Link>
           </Button>
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

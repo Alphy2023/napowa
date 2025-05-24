@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from "react";
 
+
 interface AuthFormContextType {
   formStep: number;
   totalSteps: number;
@@ -29,7 +30,8 @@ export const AuthFormProvider = ({ children }: { children: React.ReactNode }) =>
     setTotalSteps(1)
   }
   const prevStep = () => setFormStep((prev) => Math.max(prev - 1, 0));
-
+  
+ 
   return (
     <AuthFormContext.Provider value={{ formStep, setFormStep,
     setTotalSteps,resetFields,

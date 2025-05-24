@@ -40,11 +40,18 @@ import {
   Download,
   Upload,
 } from "lucide-react"
+import ScrollableTablist from "@/components/scrollable-tablist"
+import { LandingPageSettings } from "@/components/dashboard/settings/landing-page-settings"
+
+type TabItem = {
+  id:string;
+  title:string;
+}
 
 export default function SettingsPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState<string>("profile")
 
   // Profile settings
   const [firstName, setFirstName] = useState("Jane")
@@ -132,6 +139,41 @@ export default function SettingsPage() {
   const [isProgramDialogOpen, setIsProgramDialogOpen] = useState(false)
   const [programDialogMode, setProgramDialogMode] = useState("add") // "add" or "edit"
 
+
+  const settingTabs: TabItem[] = [
+    {
+      title:"Profile",
+      id:"profile"
+    },
+    {
+      title:"Account",
+      id:"account"
+    },
+    {
+      title:"Notifications",
+      id:"notifications"
+    },
+    {
+      title:"Privacy",
+      id:"privacy"
+    },
+    {
+      title:"Security",
+      id:"security"
+    },
+    {
+      title:"Programs",
+      id:"programs"
+    },
+    {
+      title:"Volunteers",
+      id:"volunteers"
+    },
+    {
+      title:"Landing page",
+      id:"landing-page"
+    },
+  ]
   // Volunteer management
   const [volunteers, setVolunteers] = useState([
     {
@@ -395,16 +437,10 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="programs">Programs</TabsTrigger>
-          <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
-        </TabsList>
-
+        <ScrollableTablist
+          items={settingTabs}
+          noCenter={true}
+          />
         <TabsContent value="profile" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
@@ -1284,6 +1320,11 @@ export default function SettingsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </TabsContent>
+
+        {/* landing page settings */}
+        <TabsContent value="landing-page" className="mt-6 space-y-6">
+         <LandingPageSettings/>
         </TabsContent>
       </Tabs>
     </div>

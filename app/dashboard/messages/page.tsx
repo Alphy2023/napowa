@@ -276,95 +276,97 @@ export default function MessagesPage() {
 
       <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden md:grid-cols-3">
         <Card className="col-span-1 flex flex-col overflow-hidden">
-          <div className="p-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Tabs component now wraps the TabsList, search input, and TabsContent */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="p-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="direct">Direct</TabsTrigger>
                 <TabsTrigger value="groups">Groups</TabsTrigger>
               </TabsList>
-            </Tabs>
-          </div>
-
-          <div className="px-4 pb-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search messages..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
             </div>
-          </div>
 
-          <ScrollArea className="flex-1">
-            <TabsContent value="direct" className="m-0">
-              <div className="space-y-1 p-2">
-                {filteredUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    className={`flex w-full items-center space-x-3 rounded-md p-2 text-left hover:bg-accent ${
-                      selectedChat === user.id ? "bg-accent" : ""
-                    }`}
-                    onClick={() => setSelectedChat(user.id)}
-                  >
-                    <div className="relative">
+            <div className="px-4 pb-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search messages..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1">
+              <TabsContent value="direct" className="m-0">
+                <div className="space-y-1 p-2">
+                  {filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      className={`flex w-full items-center space-x-3 rounded-md p-2 text-left hover:bg-accent ${
+                        selectedChat === user.id ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setSelectedChat(user.id)}
+                    >
+                      <div className="relative">
+                        <Avatar>
+                          <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                          <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span
+                          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
+                            user.status === "online" ? "bg-green-500" : "bg-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex items-center justify-between">
+                          <p className="truncate font-medium">{user.name}</p>
+                          {user.unread > 0 && (
+                            <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full
+                             bg-primary text-xs text-primary-foreground">
+                              {user.unread}
+                            </span>
+                          )}
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">{user.lastSeen}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="groups" className="m-0">
+                <div className="space-y-1 p-2">
+                  {filteredGroups.map((group) => (
+                    <button
+                      key={group.id}
+                      className={`flex w-full items-center space-x-3 rounded-md p-2 text-left hover:bg-accent ${
+                        selectedChat === `group-${group.id}` ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setSelectedChat(`group-${group.id}`)}
+                    >
                       <Avatar>
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={group.avatar || "/placeholder.svg"} alt={group.name} />
+                        <AvatarFallback>{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
-                      <span
-                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
-                          user.status === "online" ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate font-medium">{user.name}</p>
-                        {user.unread > 0 && (
-                          <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                            {user.unread}
-                          </span>
-                        )}
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex items-center justify-between">
+                          <p className="truncate font-medium">{group.name}</p>
+                          {group.unread > 0 && (
+                            <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                              {group.unread}
+                            </span>
+                          )}
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">{group.members} members</p>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">{user.lastSeen}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="groups" className="m-0">
-              <div className="space-y-1 p-2">
-                {filteredGroups.map((group) => (
-                  <button
-                    key={group.id}
-                    className={`flex w-full items-center space-x-3 rounded-md p-2 text-left hover:bg-accent ${
-                      selectedChat === `group-${group.id}` ? "bg-accent" : ""
-                    }`}
-                    onClick={() => setSelectedChat(`group-${group.id}`)}
-                  >
-                    <Avatar>
-                      <AvatarImage src={group.avatar || "/placeholder.svg"} alt={group.name} />
-                      <AvatarFallback>{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate font-medium">{group.name}</p>
-                        {group.unread > 0 && (
-                          <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                            {group.unread}
-                          </span>
-                        )}
-                      </div>
-                      <p className="truncate text-xs text-muted-foreground">{group.members} members</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-          </ScrollArea>
+                    </button>
+                  ))}
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </Card>
 
         <Card className="col-span-1 flex flex-col overflow-hidden md:col-span-2">
@@ -446,7 +448,7 @@ export default function MessagesPage() {
                         <div
                           className={`max-w-[70%] rounded-lg px-4 py-2 ${
                             msg.senderId === "current-user"
-                              ? "bg-primary text-primary-foreground"
+                              ? "bg-napowa-red/60 text-primary-foreground"
                               : "bg-muted text-muted-foreground"
                           }`}
                         >

@@ -1,19 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
-import { Eye, EyeOff, ArrowRight, Check } from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
 import { useAuthForm } from "@/contexts/auth-form-context"
 import { UseFormReturn } from "react-hook-form"
 import { Form } from "../ui/form"
@@ -26,10 +17,11 @@ interface AuthCardProps{
     cardDescription?:string;
     form:UseFormReturn<any>,
     handleNextStep?:()=>void;
+    loading?:boolean;
 }
 
 export const AuthCard = ({children,form,
-     handleNextStep,
+     handleNextStep,loading=false,
     authType, onSubmit,cardTitle,cardDescription
 }:AuthCardProps) => {
     const { formStep, totalSteps, nextStep, prevStep } = useAuthForm()
@@ -59,12 +51,16 @@ export const AuthCard = ({children,form,
                         )}
 
                     {formStep < totalSteps - 1 ? (
+                        <div className="ml-auto">
                         <Button type="button" onClick={handleNextStep ?? fallbackNextStep}>
                         Continue
                         <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
+                        </div>
                     ) : (
-                        <Button type="submit" onClick={form.handleSubmit(onSubmit)}>
+                        <Button type="submit" 
+                        loading={loading}
+                        onClick={form.handleSubmit(onSubmit)}>
                         {authType.includes("signup") ? "Create Account" : "Login"}
                         <Check className="ml-2 h-4 w-4" />
                         </Button>

@@ -298,3 +298,16 @@ model Analytics {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
+
+model LandingPageSlide {
+  id                  String   @id @default(uuid())
+  title               String
+  description         String
+  image               String
+  buttonText          String
+  buttonLink          String
+  secondaryButtonText String?
+  secondaryButtonLink String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}

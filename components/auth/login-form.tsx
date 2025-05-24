@@ -9,9 +9,10 @@ import { LoginPayload} from "@/schemas/auth.schema"
 import { useAuthForm } from "@/contexts/auth-form-context"
 
 interface LoginFormProps{
-  form: UseFormReturn<LoginPayload>
+  form: UseFormReturn<LoginPayload>,
+  loading:boolean;
 }
-export const LoginForm = ({ form}: LoginFormProps) => {
+export const LoginForm = ({ form,loading=false}: LoginFormProps) => {
 
   const { formStep } = useAuthForm()
   return (
@@ -24,6 +25,7 @@ export const LoginForm = ({ form}: LoginFormProps) => {
               form={form}
               type="email"
               name="email"
+              disabled={loading}
               id="email"
               label="Email"
               placeholder="e.g. name@example.com"
@@ -42,6 +44,7 @@ export const LoginForm = ({ form}: LoginFormProps) => {
                   form={form}
                   type="password"
                   name="password"
+                  disabled={loading}
                   id="password"
                   label="Password"
                   placeholder="************"
