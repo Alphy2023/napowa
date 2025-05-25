@@ -4,10 +4,9 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Home, Users, Calendar, FileText, ImageIcon, DollarSign, Settings, LogOut, Bell, User, BarChart2, MessageSquare, Video, BellRing, Menu, X, ChevronDown, Award, Briefcase, Heart } from 'lucide-react'
+import { Settings, LogOut, Bell, User, Menu, X} from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,13 +17,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Logo } from "@/components/logo"
-import { signOut } from "next-auth/react"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
-// import { AuthContextProvider } from "@/contexts/auth-context"
+import { useAuthContext } from "@/contexts/auth-context"
 
 // Define user roles and their permissions
 const ROLES = {
@@ -41,142 +37,7 @@ const currentUser = {
   avatar: "/placeholder.svg?height=32&width=32",
 }
 
-// Navigation items with role-based access
-const navigationItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-  },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart2,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-  },
-  {
-    title: "Members",
-    href: "/dashboard/members",
-    icon: Users,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Members", href: "/dashboard/members" },
-      { title: "Add Member", href: "/dashboard/members/add" },
-      { title: "Roles & Permissions", href: "/dashboard/members/roles" },
-    ],
-  },
-  {
-    title: "Events",
-    href: "/dashboard/events",
-    icon: Calendar,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-    children: [
-      { title: "All Events", href: "/dashboard/events" },
-      { title: "Create Event", href: "/dashboard/events/create" },
-      { title: "Categories", href: "/dashboard/events/categories" },
-    ],
-  },
-  {
-    title: "Blog",
-    href: "/dashboard/blog",
-    icon: FileText,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Posts", href: "/dashboard/blog" },
-      { title: "Create Post", href: "/dashboard/blog/create" },
-      { title: "Categories", href: "/dashboard/blog/categories" },
-    ],
-  },
-  {
-    title: "Gallery",
-    href: "/dashboard/gallery",
-    icon: ImageIcon,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Images", href: "/dashboard/gallery" },
-      { title: "Upload Images", href: "/dashboard/gallery/upload" },
-      { title: "Albums", href: "/dashboard/gallery/albums" },
-    ],
-  },
-  {
-    title: "Donations",
-    href: "/dashboard/donations",
-    icon: DollarSign,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Donations", href: "/dashboard/donations" },
-      { title: "Campaigns", href: "/dashboard/donations/campaigns" },
-      { title: "Reports", href: "/dashboard/donations/reports" },
-    ],
-  },
-  {
-    title: "Programs",
-    href: "/dashboard/programs",
-    icon: Award,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Programs", href: "/dashboard/programs" },
-      { title: "Add Program", href: "/dashboard/programs/add" },
-    ],
-  },
-  {
-    title: "Volunteers",
-    href: "/dashboard/volunteers",
-    icon: Heart,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Volunteers", href: "/dashboard/volunteers" },
-      { title: "Add Volunteer", href: "/dashboard/volunteers/add" },
-    ],
-  },
-  {
-    title: "Partners",
-    href: "/dashboard/partners",
-    icon: Briefcase,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-    children: [
-      { title: "All Partners", href: "/dashboard/partners" },
-      { title: "Add Partner", href: "/dashboard/partners/add" },
-    ],
-  },
-  {
-    title: "Messages",
-    href: "/dashboard/messages",
-    icon: MessageSquare,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-  },
-  {
-    title: "Meetings",
-    href: "/dashboard/meetings",
-    icon: Video,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-  },
-  {
-    title: "Announcements",
-    href: "/dashboard/announcements",
-    icon: Bell,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/notifications",
-    icon: BellRing,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-  },
-  {
-    title: "Reports",
-    href: "/dashboard/reports",
-    icon: FileText,
-    roles: [ROLES.ADMIN, ROLES.EDITOR],
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-    roles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.MEMBER],
-  },
-]
+
 
 export default function DashboardLayout({
   children,
@@ -186,7 +47,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const {openSidebar,closeSidebar,sidebarOpen} = useAuthContext()
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
 
   
@@ -196,12 +57,6 @@ export default function DashboardLayout({
     setMounted(true)
   }, [])
 
-  const toggleCollapsible = (title: string) => {
-    setOpenItems((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }))
-  }
 
   if (!mounted) {
     return null
@@ -222,7 +77,8 @@ export default function DashboardLayout({
         <header className="fixed top-0 z-40 w-full border-b bg-background lg:hidden">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center">
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <Button variant="ghost" size="icon"
+               onClick={() => sidebarOpen ? closeSidebar() : openSidebar()}>
                 {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
               <div className="ml-3 flex items-center gap-2">

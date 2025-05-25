@@ -4,6 +4,7 @@ import { Mona_Sans as FontSans } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
+import { AuthContextProvider } from "@/contexts/auth-context"
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -25,7 +26,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-backgroundp font-sans antialiased", fontSans.variable)}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <AuthContextProvider>
+            {children}
+          </AuthContextProvider>
         </ThemeProvider>
       </body>
     </html>

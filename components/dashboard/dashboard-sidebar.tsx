@@ -1,5 +1,5 @@
 "use client"
-import React from "react"
+import React, { useEffect } from "react"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Logo } from "@/components/logo"
 import { signOut } from "next-auth/react"
+import { useAuthContext } from "@/contexts/auth-context"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // Define user roles and their permissions
 const ROLES = {
@@ -168,8 +170,10 @@ const currentUser = {
 export const DashboardSidebar = () => {
     const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({})
     const [loading,setLoading] = React.useState<boolean>(false)
-    const [sidebarOpen, setSidebarOpen] = React.useState<boolean>(true)
+      const {openSidebar,closeSidebar,sidebarOpen} = useAuthContext()
+    
     const pathname = usePathname()
+    const isMobile = useIsMobile()
     
       // Filter navigation items based on user role
     const filteredNavigation = navigationItems.filter((item) => 
@@ -182,12 +186,21 @@ export const DashboardSidebar = () => {
         }));
     
     }
+    console.log({sidebarOpen})
     const handleLogout = async () => {
         setLoading(true)
         await signOut({ redirect: true, callbackUrl: "/auth/login" });
         setLoading(false)
 
     };
+    useEffect(()=>{
+      if(!isMobile){
+        openSidebar()
+      }
+      else{
+        closeSidebar()
+      }
+    },[isMobile])
   return (
     <aside
         className={`fixed inset-y-0 left-0 z-30 w-64 transform border-r 

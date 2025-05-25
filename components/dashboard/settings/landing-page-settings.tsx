@@ -34,6 +34,16 @@ const DEFAULT_BUTTON_OPTIONS = [
   "Learn More",
 ]
 
+const BUTTON_LINKS: Record<string, string> = {
+  "Donate Now": "/donate",
+  "Our Programs": "/programs",
+  "Our Impact": "/impact",
+  "Partner With Us": "/partner",
+  "Become a Member": "/auth/signup",
+  "Learn More": "/about",
+}
+
+
 type SlideType = {
   id: string
   image: string
@@ -145,7 +155,7 @@ export const LandingPageSettings = () => {
     setLoading(true);
     setError(null);
      try {
-    console.log("Final Slides:", slides);
+   
 
     const res = await fetch("/api/landing-slides", {
       method: "POST",
@@ -172,14 +182,18 @@ export const LandingPageSettings = () => {
 
   return (
     <div className="relative space-y-8">
+        <CardHeader>
+          <CardTitle>Landing page hero sections</CardTitle>
+          <CardDescription>Manage how you want your hero slides to look and what the general public sees.</CardDescription>
+        </CardHeader>
       {slides.map((slide, index) => (
         <Card key={slide.id}>
           <CardHeader>
             <CardTitle>Slide {index + 1}</CardTitle>
-            <CardDescription>Customize slide {index + 1}</CardDescription>
+            <CardDescription>Create and manage slide {index + 1}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-           <div className="relative h-[400px] w-full
+           <div className="relative  h-[200px] md:h-[400px] w-full
             bg-muted flex items-center justify-center 
             rounded-md overflow-hidden"
              onDragOver={(e) => e.preventDefault()}
@@ -197,14 +211,15 @@ export const LandingPageSettings = () => {
               }
             }}
             >
-            <label htmlFor={`file-upload-${index}`} className="relative w-full h-full cursor-pointer">
+            <label htmlFor={`file-upload-${index}`}
+             className="relative w-full h-full cursor-pointer">
               {slide.image ? (
                 <>
                   <Image
                     src={slide.image}
                     alt="Uploaded image"
                     fill
-                    className="object-cover"
+                    className="object-cover aspect-video"
                   />
                   <div className="absolute top-2 right-2">
                     <Button
@@ -260,9 +275,10 @@ export const LandingPageSettings = () => {
               <div className="flex gap-2">
                 <Select
                   value={slide.buttonText}
-                  onValueChange={(value) =>
-                    handleSlideChange(index, "buttonText", value)
-                  }
+                 onValueChange={(value) => {
+                    handleSlideChange(index, "buttonText", value);
+                    handleSlideChange(index, "buttonLink", BUTTON_LINKS[value] || "");
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a primary button" />
@@ -275,17 +291,18 @@ export const LandingPageSettings = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={() => handleAddCustomButton(index, true)}>
+                <Button type="button" variant="ghost"
+                 onClick={() => handleAddCustomButton(index, true)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <Input
+              {/* <Input
                 placeholder="Button Link"
                 value={slide.buttonLink}
                 onChange={(e) =>
                   handleSlideChange(index, "buttonLink", e.target.value)
                 }
-              />
+              /> */}
             </div>
 
             {/* Secondary Button */}
@@ -294,9 +311,11 @@ export const LandingPageSettings = () => {
               <div className="flex gap-2">
                 <Select
                   value={slide.secondaryButtonText}
-                  onValueChange={(value) =>
-                    handleSlideChange(index, "secondaryButtonText", value)
-                  }
+                  onValueChange={(value) => {
+                    handleSlideChange(index, "secondaryButtonText", value);
+                    handleSlideChange(index, "secondaryButtonLink", BUTTON_LINKS[value] || "");
+                  }}
+
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a secondary button" />
@@ -309,17 +328,18 @@ export const LandingPageSettings = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={() => handleAddCustomButton(index, false)}>
+                <Button type="button" variant="ghost"
+                onClick={() => handleAddCustomButton(index, false)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <Input
+              {/* <Input
                 placeholder="Secondary Button Link"
                 value={slide.secondaryButtonLink}
                 onChange={(e) =>
                   handleSlideChange(index, "secondaryButtonLink", e.target.value)
                 }
-              />
+              /> */}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -350,7 +370,7 @@ export const LandingPageSettings = () => {
         </Card>
       ))}
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-4">
         <Button onClick={addSlide} variant="outline">
           <Plus className="mr-2 h-4 w-4" /> Add New Slide
         </Button>
