@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
+import { useSyncUserWithSession } from "@/hooks/use-SyncUserWithSession"
 
 interface AuthContextType {
   sidebarOpen: boolean;
@@ -18,6 +19,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const openSidebar = () => setSidebarOpen(true);
   const closeSidebar = () => setSidebarOpen(false);
 
+  useSyncUserWithSession()
   return (
     <AuthContext.Provider value={{ sidebarOpen, openSidebar, closeSidebar }}>
       {children} 

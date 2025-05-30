@@ -12,17 +12,19 @@ import { useAuthForm } from "@/contexts/auth-form-context"
 import { signIn } from "next-auth/react";
 import { CustomAlert } from "@/components/CustomAlert"
 import { getServerSession } from "next-auth"
-// import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getSession } from "next-auth/react"
+import { ApiResponse } from "@/lib/api/client"
+import { useToast } from "@/hooks/use-toast"
+import { authApi } from "@/lib/api"
 
 
 export default function LoginPage() {
   const { setTotalSteps,nextStep,formStep,resetFields } = useAuthForm();
   const [error,setError] = React.useState<string>("");
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const { toast } = useToast()
 
   const router = useRouter()
-   const searchParams = useSearchParams()
+  const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectedFrom") || "/dashboard"
   const form = useForm<LoginPayload>({
       resolver: zodResolver(loginSchema),
@@ -32,33 +34,34 @@ export default function LoginPage() {
         password: "",
       },
   })
-  const onSubmit = async (data: LoginPayload) => {
-    setLoading(true); 
+  const {
+    formState: { isSubmitting:loading },
+    reset,
+   } = form
+  const onSubmit = async (values: LoginPayload) => {
     setError(""); 
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        console.error("login error:", result);
-        setLoading(false); 
-
-        setError(result?.error || "Login failed");
-        
-        return;
-      }
+       const res: ApiResponse<LoginPayload> = await authApi.login(values);
+               
+        if (!res?.success) {
+            toast({
+                title: "Error occurred.",
+                description: res?.message || res?.errors?.[0]?.message || "Something went wrong.",
+            });
+            setError(res?.message || res?.errors?.[0]?.message || "Something went wrong.");
+            return; 
+          }
       const authRes = await signIn("credentials", {
-        token: result.token,
+        token: res?.data?.token,
         redirect: false,
       })
 
       if (authRes?.ok) {
+          toast({
+              title: "Successful.",
+              description: res?.message || "Welcome back.",
+          });
         router.push(redirectTo)
       } else {
         setError(authRes?.error || "Authentication failed")
@@ -66,11 +69,8 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("Something went wrong.");
-      return;
-    } finally {
-      setLoading(false);
-      return;
-    }
+      // return;
+    } 
   };
 
 

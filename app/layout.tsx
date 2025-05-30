@@ -1,10 +1,11 @@
-import type React from "react"
+import React from "react"
 import type { Metadata } from "next"
 import { Mona_Sans as FontSans } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
-import { AuthContextProvider } from "@/contexts/auth-context"
+
+import { AppProvider } from "@/providers/app.provider"
+
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -22,14 +23,19 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+
+//   React.useEffect(() => {
+//   if ("serviceWorker" in navigator) {
+//     navigator.serviceWorker.register("/sw.js")
+//   }
+// }, [])
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-backgroundp font-sans antialiased", fontSans.variable)}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthContextProvider>
-            {children}
-          </AuthContextProvider>
-        </ThemeProvider>
+        <AppProvider>
+              {children}
+        </AppProvider>
       </body>
     </html>
   )

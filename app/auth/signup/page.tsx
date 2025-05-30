@@ -11,6 +11,11 @@ import { SignupPayload, signupSchema } from "@/schemas/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthForm } from "@/contexts/auth-form-context"
 import { VolunteerForm } from "@/components/auth/volunteer-form"
+import { ApiResponse } from "@/lib/api/client"
+import { authApi } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { CustomAlert } from "@/components/CustomAlert"
 
 type SignUpTabsProps = {
     title:string;
@@ -21,6 +26,10 @@ type SignUpTabsProps = {
 export default function SignupPage() {
   const [activeTab, setActiveTab] = useState("member")
   const { setTotalSteps,nextStep,formStep,resetFields } = useAuthForm()
+  const [error,setError] = useState<string>("");
+  
+  const { toast } = useToast()
+  const router = useRouter()
   
 
   const form = useForm<SignupPayload>({
@@ -42,6 +51,10 @@ export default function SignupPage() {
       agreeTerms: false, 
     }
   })
+   const {
+    formState: { isSubmitting:loading },
+    reset,
+   } = form
   const handleNextStep = async () => {
     const stepFields: Record<number, (keyof SignupPayload)[]> = {
       0: ["firstName", "lastName", "email", "phone"],
@@ -54,9 +67,25 @@ export default function SignupPage() {
       nextStep(() => Promise.resolve(true))
     }
   }
-  const onSubmit = async (data: SignupPayload) => {
-       console.log(data)
+  const onSubmit = async (values: SignupPayload) => {
+      console.log(values)
+      const res: ApiResponse<SignupPayload> = await authApi.signup(values);
+                    
+      if (!res?.success) {
+          toast({
+              title: "Error occurred.",
+              description: res?.message || res?.errors?.[0]?.message || "Something went wrong.",
+          });
+          setError(res?.message || res?.errors?.[0]?.message || "Something went wrong.");
+          return; 
+      }
+        toast({
+            title: "Successful.",
+            description: res?.message,
+      });
+      router.push("/auth/login")
   }
+    
 
 
   const signUpTabs: SignUpTabsProps[] = [
@@ -100,7 +129,11 @@ export default function SignupPage() {
                 onSubmit={onSubmit}
                 cardTitle={item?.title}
                 cardDescription={item?.description}
+                loading={loading}
                 >
+                   {error && (
+                      <CustomAlert variant={"destructive"} text={error}/>
+                    )}
                 {item?.key==='member' ? (
                   <SignupForm form={form}/>
                 ) : (

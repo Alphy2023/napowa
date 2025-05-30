@@ -47,6 +47,8 @@ import { cn } from "@/lib/utils";
 import { ControllerRenderProps, FieldValues, Path, UseFormReturn } from "react-hook-form";
 // import { Switch } from "@/coponents/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 
 type OptionItem = {
@@ -64,6 +66,7 @@ type InputFieldProps<T extends FieldValues> = {
   name: Path<T>
   fieldType: FieldType
   type?: string
+  hidePLabel?:boolean;
   label?: string;
   checkboxLabel?:string | React.ReactNode;
   description?: string
@@ -103,6 +106,7 @@ const RenderField = <T extends FieldValues>({
   form,
   placeholder,
   label,
+  hidePLabel,
   checkboxLabel,
   description,
   type,
@@ -162,53 +166,55 @@ const RenderField = <T extends FieldValues>({
       )
       break
 
-   case FIELDTYPES.SELECT:
-    FieldComponent = (
-      <Select onValueChange={field.onChange} defaultValue={field.value}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {(options || []).map((groupOrItem, index) => {
-            // Check if this is a group (has 'items') or a flat option
-            if ("items" in groupOrItem) {
-              // It's a group
-              return (
-                <SelectGroup key={index}>
-                  {groupOrItem.label && <SelectLabel>{groupOrItem.label}</SelectLabel>}
-                  {groupOrItem.items.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              );
-            } else {
-              // It's a flat option
-              return (
-                <SelectItem key={groupOrItem.value} value={groupOrItem.value}>
-                  {groupOrItem.label}
-                </SelectItem>
-              );
-            }
-          })}
-        </SelectContent>
-      </Select>
-    );
-    break;
+    case FIELDTYPES.SELECT:
+      FieldComponent = (
+        <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {(options || []).map((groupOrItem, index) => {
+              // Check if this is a group (has 'items') or a flat option
+              if ("items" in groupOrItem) {
+                // It's a group
+                return (
+                  <SelectGroup key={index}>
+                    {groupOrItem.label && <SelectLabel>{groupOrItem.label}</SelectLabel>}
+                    {groupOrItem.items.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                );
+              } else {
+                // It's a flat option
+                return (
+                  <SelectItem key={groupOrItem.value} value={groupOrItem.value}>
+                    {groupOrItem.label}
+                  </SelectItem>
+                );
+              }
+            })}
+          </SelectContent>
+        </Select>
+      );
+      break;
 
-  //  case FIELDTYPES.SWITCH:
-  //   FieldComponent = (
-  //     <div className="flex items-center space-x-2">
-  //       <Switch
-  //         checked={field.value}
-  //         onCheckedChange={field.onChange}
-  //         {...rest}
-  //       />
-  //       <span className="text-sm text-muted-foreground">{label}</span>
-  //     </div>
-  //   )
-  //   break
+    case FIELDTYPES.SWITCH:
+    FieldComponent = (
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label>{label}</Label>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <Switch
+          checked={field.value}
+          onCheckedChange={field.onChange}
+        />
+      </div>
+    )
+    break
     case FIELDTYPES.CHECKBOX:
     FieldComponent = (
       <div className="flex items-center space-x-2">
@@ -308,9 +314,9 @@ const RenderField = <T extends FieldValues>({
 
   return (
     <FormItem>
-      {label && !checkboxLabel && <FormLabel>{label}</FormLabel>}
+      {label && !checkboxLabel && !hidePLabel && <FormLabel>{label}</FormLabel>}
       <FormControl>{FieldComponent}</FormControl>
-      {description && <FormDescription>{description}</FormDescription>}
+      {description && !hidePLabel && <FormDescription>{description}</FormDescription>}
       <FormMessage />
     </FormItem>
   )

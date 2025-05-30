@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import {phoneFieldSchema,emailFieldSchema} from "./custom.schema"
 
 
 export const loginSchema = z.object({
@@ -17,8 +18,8 @@ export const loginSchema = z.object({
 export const signupSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(10),
+  email: emailFieldSchema,
+  phone: phoneFieldSchema,
   password: z.string().min(6),
   confirmPassword: z.string().min(6),
   memberType: z.enum(["regular", "widow", "orphan", "family"]),
@@ -35,6 +36,7 @@ export const signupSchema = z.object({
   path: ["confirmPassword"],
 })
 
+export type SignupPayload = z.infer<typeof signupSchema>
 
 
 export const loginResponseSchema = loginSchema.extend({
@@ -43,7 +45,6 @@ export const loginResponseSchema = loginSchema.extend({
 
 
 
-export type SignupPayload = z.infer<typeof signupSchema>
 
 
 export type LoginPayload = z.infer<typeof loginSchema>

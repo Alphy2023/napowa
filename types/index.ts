@@ -10,3 +10,8 @@ export type LandingPageSlide = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type TabItem = {
+  id:string;
+  title:string;
+}

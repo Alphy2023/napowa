@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
+
 // Define your route categories
 const PUBLIC_ROUTES = ["/", "/about", "/contact",
   "/programs","/events","/gallery","/blog",
@@ -26,6 +27,8 @@ function isApiRoute(path: string): boolean {
 
 export async function middleware(req: NextRequest) {
   const { pathname, origin } = req.nextUrl;
+
+
   // 1. Allow all API routes - these should be publicly accessible
   if (isApiRoute(pathname)) {
     return NextResponse.next();
