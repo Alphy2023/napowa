@@ -35,6 +35,10 @@ export const apiConfigs: {
     PUT: { method: 'PUT', authRequired: true },   
     DELETE: { method: 'DELETE', authRequired: true }, 
   },
+  'contactUs.enquiry': {
+    GET: { method: 'GET', authRequired: false }, 
+    POST: { method: 'POST', authRequired: false }, 
+  },
   'settings.notifications': {
     GET: { method: 'GET', authRequired: false }, 
     POST: { method: 'POST', authRequired: true }, 

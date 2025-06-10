@@ -14,6 +14,16 @@ const isEndTimeGreater = (start: string, end: string) => {
   return start < end;
 };
 
+export const contactFormSchema = z.object({
+  firstname: z.string().min(2, "First name is required."),
+  lastname: z.string().min(2, "Last name is required."),
+  email: emailFieldSchema,
+  phone: phoneFieldSchema,
+  subject: z.string().min(2, "Subject is required."),
+  message: z.string().min(2, "Message is required."),
+})
+
+export type ContactFormPayload = z.infer<typeof contactFormSchema>
 
 const timeRangeSchema = z.object({
   start: z.string().min(1, "Start time required"),

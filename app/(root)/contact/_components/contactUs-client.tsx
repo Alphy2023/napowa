@@ -3,17 +3,15 @@ import React, { useEffect, useCallback } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Mail, MapPin, Phone } from "lucide-react"
 import { PageTitle } from "@/components/page-title"
 import { useApiClient } from "@/lib/api/client"
-import { ContactUsSettings } from "@/schemas/contactUs.schema" // Use your Zod inferred type here
-import { INITIAL_DEFAULT_CONTACT_SETTINGS } from "@/constants/mock-data" // Ensure this is a valid default
-import Image from "next/image" // Import Image for social links if needed
+import { ContactUsSettings } from "@/schemas/contactUs.schema" 
+import { INITIAL_DEFAULT_CONTACT_SETTINGS } from "@/constants/mock-data" 
+import Image from "next/image" 
 import ContactUsLoading from "../loading"
 import { contactUsApi } from "@/lib/api"
+import { ContactUsForm } from "./contact-us-form"
 
 export default function ContactUsClient() {
     const apiClient = useApiClient();
@@ -164,108 +162,11 @@ export default function ContactUsClient() {
                     </Card>
                 )}
             </div>
-
             {/* Send Us a Message Form (remains static for now as it's not part of settings) */}
-            <div className="grid md:grid-cols-2 gap-8 mb-16">
-                <div>
-                    <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
-                    <form className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="first-name">First Name</Label>
-                                <Input id="first-name" placeholder="Enter your first name" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="last-name">Last Name</Label>
-                                <Input id="last-name" placeholder="Enter your last name" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" placeholder="Enter your email address" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input id="phone" placeholder="Enter your phone number" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="subject">Subject</Label>
-                            <Input id="subject" placeholder="Enter message subject" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="message">Message</Label>
-                            <Textarea id="message" placeholder="Enter your message" rows={5} />
-                        </div>
-
-                        <Button type="submit" className="w-full">
-                            Send Message
-                        </Button>
-                    </form>
-                </div>
-
-                <div>
-                    {/* Location Section */}
-                    {visitUsSection && (
-                        <>
-                            <h2 className="text-2xl font-bold mb-6">Our Location</h2>
-                         <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-                          <div className="w-full h-full flex items-center justify-center bg-[url('/placeholder.svg?height=400&width=600')] bg-cover bg-center">
-                            <iframe
-                              title="Google Map"
-                              className="w-full h-full border-0"
-                              loading="lazy"
-                              allowFullScreen
-                              referrerPolicy="no-referrer-when-downgrade"
-                              src={`https://www.google.com/maps?q=${encodeURIComponent(`${visitUsSection.fields.hq} ${visitUsSection.fields.street} ${visitUsSection.fields.city}`)}&output=embed`}
-                            />
-                          </div>
-
-                          {/* Floating label on top of the map */}
-                          <div className="absolute top-4 left-4 z-10 p-4 rounded-lg bg-white/70 backdrop-blur-sm shadow-md">
-                            <p className="font-medium">{visitUsSection?.fields?.hq}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {visitUsSection?.fields?.street}, {visitUsSection?.fields?.city}
-                            </p>
-                          </div>
-                        </div>
-
-                        </>
-                    )}
-
-                    {/* FAQ Section */}
-                    {contactData?.showFaqs && (
-                        <div className="mt-8">
-                            <h3 className="text-xl font-bold mb-4">Frequently Asked Questions</h3>
-                            <div className="space-y-4">
-                                {/* Currently using static data, but you could fetch this too if it were dynamic */}
-                                {[
-                                    {
-                                        question: "How can I become a member of NAPOWA?",
-                                        answer: "Membership is open to all wives and widows of police officers. Visit our membership page or contact our membership office for more information.",
-                                    },
-                                    {
-                                        question: "How can I donate to NAPOWA?",
-                                        answer: "You can donate through our website, mobile money, or bank transfer. Visit our donation page for more details.",
-                                    },
-                                    {
-                                        question: "Does NAPOWA have branches across Kenya?",
-                                        answer: "Yes, we have regional chapters across all 47 counties in Kenya. Contact us to find the nearest chapter to you.",
-                                    },
-                                ].map((faq, index) => (
-                                    <div key={index} className="border-b pb-4">
-                                        <h4 className="font-medium mb-2">{faq.question}</h4>
-                                        <p className="text-muted-foreground">{faq.answer}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <ContactUsForm
+                visitUsSection={visitUsSection}
+                showFaqs={contactData?.showFaqs}
+            />
 
             {/* Connect With Us Section */}
             {contactData?.showConnect && contactData?.socialLinks 
@@ -280,7 +181,7 @@ export default function ContactUsClient() {
                                     <span className="sr-only">{social?.platform}</span>
                                     {/* You'll need actual icons for each social media platform */}
                                     {/* For example, if you have SVG icons or use a library like Lucide React for social icons: */}
-                                    {social.platform === 'facebook' && <Image src="/icons/facebook.svg" alt="Facebook" width={24} height={24} className="h-6 w-6" />}
+                                    {social.platform === 'facebook' && <Image src="/images/icons/facebook.png" alt="Facebook" width={24} height={24} className="h-6 w-6" />}
                                     {social.platform === 'twitter' && <Image src="/icons/twitter.svg" alt="Twitter" width={24} height={24} className="h-6 w-6" />}
                                     {social.platform === 'instagram' && <Image src="/icons/instagram.svg" alt="Instagram" width={24} height={24} className="h-6 w-6" />}
                                     {social.platform === 'youtube' && <Image src="/icons/youtube.svg" alt="YouTube" width={24} height={24} className="h-6 w-6" />}

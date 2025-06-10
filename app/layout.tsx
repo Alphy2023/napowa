@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 import type { Metadata } from "next"
 import { Mona_Sans as FontSans } from "next/font/google"
 import { cn } from "@/lib/utils"

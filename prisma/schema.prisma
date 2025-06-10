@@ -167,6 +167,32 @@ model ContactUsSettings {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+model Enquiry {
+  id            String    @id @default(cuid())
+  firstname     String
+  lastname      String
+  phone         String
+  email         String 
+  subject       String
+  message       String   
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  responses  EnquiryResponse[]
+  @@map("enquiries")
+}
+model EnquiryResponse {
+  id            String  @id @default(cuid())
+  message       String?
+  subject       String?
+  enquiryId     String
+  respondedBy   String?
+  enquiry       Enquiry?   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  
+  @@unique([enquiryId])
+  @@map("enquiry_responses")
+}
 
 model Blog {
   id                String    @id @default(cuid())
@@ -270,16 +296,7 @@ model Partner {
   updatedAt         DateTime  @updatedAt
 }
 
-model ContactMessage {
-  id                String    @id @default(cuid())
-  name              String
-  email             String
-  subject           String?
-  message           String    @db.Text
-  status            String    @default("unread") // unread, read, replied
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-}
+
 
 model Announcement {
   id                String    @id @default(cuid())

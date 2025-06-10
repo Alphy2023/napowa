@@ -117,7 +117,7 @@ export function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="mb-6 text-4xl font-bold 
-                    tracking-tight md:text-6xl text-napowa-orangep text-white"
+                    tracking-tight md:text-6xl text-napowa-orange"
                   >
                     {slide.title}
                   </motion.h1>
@@ -125,7 +125,8 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
-                    className="mb-8 text-lg text-muted-foregroundp  md:text-xl"
+                    className="mb-8 text-lg text-muted-foregroundp text-white
+                      md:text-xl"
                   >
                     {slide.description}
                   </motion.p>

@@ -6,6 +6,8 @@ export const apiEndpoints = {
   },
   contactUs: {
     settings: () => '/api/contact-us-settings', 
+    enquiry: () => '/api/enquiry', 
+
   },
   settings: {
     notifications: () => '/api/settings/notifications', 

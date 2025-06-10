@@ -1,6 +1,6 @@
 "use client";
 
-import { ContactUsSettings } from "@/schemas/contactUs.schema";
+import { ContactFormPayload, ContactUsSettings } from "@/schemas/contactUs.schema";
 import { ApiResponse, useApiClient } from "./client";
 import { NotificationSettingsForm } from "@/schemas/notificationSettings.schema";
 import { LoginPayload, SignupPayload } from "@/schemas/auth.schema";
@@ -29,10 +29,63 @@ export const contactUsApi = {
       };
     }
   },
+  createEnquiry: async (
+    data: ContactFormPayload
+  ): Promise<ApiResponse<ContactFormPayload>> => {
+    try {
+      let response = await apiClient.mutate.post<ContactFormPayload>("contactUs.enquiry", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while submitting enquiry.",
+        status: 500,
+      };
+    }
+  },
   // get contact settings
    getContactSettings: async (): Promise<ApiResponse<ContactUsSettings>> => {
     try {
       const response = await apiClient.query<ContactUsSettings>("contactUs.settings");
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while fetching settings.",
+        status: 500,
+      };
+    }
+  },
+}
+// user api
+export const userApi = {
+  createUser: async (
+    data: ContactUsSettings
+  ): Promise<ApiResponse<ContactUsSettings>> => {
+    try {
+      let response = await apiClient.mutate.put<ContactUsSettings>("contactUs.settings", data);
+
+      if (response.status === 404) {
+        response = await apiClient.mutate.post<ContactUsSettings>("contactUs.settings", data);
+      }
+
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while saving settings.",
+        status: 500,
+      };
+    }
+  },
+  // get user info
+   getUserInfo: async (userId:string): Promise<ApiResponse<ContactUsSettings>> => {
+    try {
+      const response = await apiClient.query<ContactUsSettings>
+      ("contactUs.settings",{},userId);
       return response;
     } catch (error: any) {
       return {

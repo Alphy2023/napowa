@@ -13,7 +13,6 @@ interface LoginFormProps{
   loading:boolean;
 }
 export const LoginForm = ({ form,loading=false}: LoginFormProps) => {
-
   const { formStep } = useAuthForm()
   return (
     <>
