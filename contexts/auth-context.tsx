@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-import { useSyncUserWithSession } from "@/hooks/use-SyncUserWithSession"
+import { useSyncUserWithSession } from "@/hooks/use-sync-session"
 
 interface AuthContextType {
   sidebarOpen: boolean;

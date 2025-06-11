@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useUserStore } from "@/store/user.store"
 
-export function useSyncUserWithSession() {
+export const useSyncUserWithSession =()=> {
   const { data: session, status } = useSession()
   const setUser = useUserStore((s) => s.setUser)
   const clearUser = useUserStore((s) => s.clearUser)
