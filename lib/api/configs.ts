@@ -51,6 +51,15 @@ export const apiConfigs: {
     GET: { method: 'GET', authRequired: true },
     PUT: { method: 'PUT', authRequired: true },
   },
+  'roles.list': {
+    GET: { method: 'GET', authRequired: false },
+  },
+  'roles.create': {
+    POST: { method: 'POST', authRequired: false },
+  },
+  'roles.update': {
+    PUT: { method: 'PUT', authRequired: false },
+  },
 };
 
 // Helper function to resolve the URL from `apiEndpoints`

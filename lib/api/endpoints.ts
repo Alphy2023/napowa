@@ -16,4 +16,9 @@ export const apiEndpoints = {
     list: () => '/api/users',
     profile: (userId: string) => `/api/users/${userId}`,
   },
+  roles: {
+    list: (params: string) => `/api/roles?${params}`,
+    update: (roleId: string) => `/api/roles/${roleId}`,
+    create: () => "/api/roles"
+  },
 };

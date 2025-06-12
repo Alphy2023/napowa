@@ -1,4 +1,7 @@
 import { ContactUsSettings } from "@/schemas/contactUs.schema";
+import { DonationData } from "@/types/donation.types";
+import { EventData } from "@/types/event.types";
+import { MembershipData } from "@/types/membership.types";
 
 export const INITIAL_DEFAULT_CONTACT_SETTINGS: ContactUsSettings = {
     pageTitle: "Default Contact Us Title",
@@ -84,3 +87,44 @@ export const PERMISSIONS_BY_ROLE = {
     settings: ["view"]
   }
 }
+
+
+  // Sample data for charts
+export const donationMockData: DonationData[] = [
+    { month: "Jan", amount: 12000 },
+    { month: "Feb", amount: 18000 },
+    { month: "Mar", amount: 15000 },
+    { month: "Apr", amount: 22000 },
+    { month: "May", amount: 28000 },
+    { month: "Jun", amount: 25000 },
+    { month: "Jul", amount: 32000 },
+  ]
+
+export const membershipMockData: MembershipData[] = [
+    { month: "Jan", members: 120 },
+    { month: "Feb", members: 150 },
+    { month: "Mar", members: 180 },
+    { month: "Apr", members: 210 },
+    { month: "May", members: 250 },
+    { month: "Jun", members: 280 },
+    { month: "Jul", members: 310 },
+  ]
+
+export const recentMockDonations: DonationData[] = [
+    { id: 1, name: "Jane Doe",
+         amount: 5000, date: "2023-05-15",
+          method: "M-Pesa" },
+    { id: 2, name: "John Smith", amount: 10000, date: "2023-05-14", method: "Bank Transfer" },
+    { id: 3, name: "Mary Johnson", amount: 2500, date: "2023-05-13", method: "M-Pesa" },
+    { id: 4, name: "Robert Brown", amount: 7500, date: "2023-05-12", method: "Card Payment" },
+    { id: 5, name: "Sarah Williams", amount: 3000, date: "2023-05-11", method: "M-Pesa" },
+  ]
+
+export const upcomingMockEvents: EventData[] = [
+    { id: 1, title: "Woman of Purpose Annual Event", 
+        date: "2023-06-15", location: "Nairobi" },
+    { id: 2, title: "Skills Training Workshop", date: "2023-06-22", location: "Mombasa" },
+    { id: 3, title: "Health Advocacy Program", date: "2023-07-05", location: "Kisumu" },
+  ]
+
+export const COLORS: string[] = ["#5ECCE9", "#0A3161", "#FFD700", "#8B2323", "#FF8C00"]

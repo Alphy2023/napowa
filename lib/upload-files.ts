@@ -1,9 +1,5 @@
-
-import { toast } from "@/hooks/use-toast"; // Assuming useToast is accessible
-import { CloudinaryUploadResult, UploadCallbacks, UploadingImage } from "@/types/upload-result.types";
-import { Dispatch, SetStateAction } from "react";
-
-
+import { toast } from "@/hooks/use-toast"
+import type { CloudinaryUploadResult, UploadCallbacks, UploadingImage } from "@/types/upload-result.types"
 
 /**
  * Uploads a file to Cloudinary via a backend API endpoint.
@@ -15,70 +11,70 @@ import { Dispatch, SetStateAction } from "react";
  */
 export const uploadFileToCloudinary = async (
   imageToUpload: UploadingImage,
-  callbacks: UploadCallbacks
+  callbacks: UploadCallbacks,
 ): Promise<void> => {
-  const { id, file } = imageToUpload;
-  const { onProgress, onSuccess, onFailure, onStatusChange } = callbacks;
+  const { id, file } = imageToUpload
+  const { onProgress, onSuccess, onFailure, onStatusChange } = callbacks
 
-  onStatusChange(id, "uploading"); // Update status via callback
+  onStatusChange(id, "uploading") // Update status via callback
 
-  const formData = new FormData();
-  formData.append("file", file);
+  const formData = new FormData()
+  formData.append("file", file)
 
   try {
-    const xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest()
 
     xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
-        const percentCompleted = (event.loaded / event.total) * 100;
-        onProgress?.(id, percentCompleted);
+        const percentCompleted = (event.loaded / event.total) * 100
+        onProgress?.(id, percentCompleted)
       }
-    });
+    })
 
-    xhr.open("POST", "/api/upload-cloudinary"); // Your backend endpoint
-    xhr.send(formData);
+    xhr.open("POST", "/api/files/upload-cloudinary") // Your backend endpoint
+    xhr.send(formData)
 
     await new Promise<void>((resolve, reject) => {
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
-            const result: CloudinaryUploadResult = JSON.parse(xhr.responseText);
-            onSuccess(id, result); // Call success callback
-            resolve();
+            const result: CloudinaryUploadResult = JSON.parse(xhr.responseText)
+            onSuccess(id, result) // Call success callback
+            resolve()
           } catch (e) {
-            onFailure(id, "Failed to parse server response.");
-            reject(new Error("Failed to parse server response."));
+            onFailure(id, "Failed to parse server response.")
+            reject(new Error("Failed to parse server response."))
           }
         } else {
-          let errorMessage = `Upload failed with status: ${xhr.status}`;
+          let errorMessage = `Upload failed with status: ${xhr.status}`
           try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            errorMessage = errorResponse.message || errorMessage;
+            const errorResponse = JSON.parse(xhr.responseText)
+            errorMessage = errorResponse.message || errorMessage
           } catch (e) {
             // response not JSON
           }
-          onFailure(id, errorMessage); // Call failure callback
-          reject(new Error(errorMessage));
+          onFailure(id, errorMessage) // Call failure callback
+          reject(new Error(errorMessage))
         }
-      };
+      }
 
       xhr.onerror = () => {
-        onFailure(id, "Network error or server unreachable."); // Call failure callback
-        reject(new Error("Network error or server unreachable."));
-      };
-    });
+        onFailure(id, "Network error or server unreachable.") // Call failure callback
+        reject(new Error("Network error or server unreachable."))
+      }
+    })
 
     toast({
-      title: "Image Uploaded",
+      title: "Media Uploaded",
       description: `${file.name} uploaded successfully.`,
-    });
+    })
   } catch (error: any) {
-    console.error("Cloudinary upload error:", error);
-    onFailure(id, error.message || "Upload failed"); // Call failure callback
+    console.error("Cloudinary upload error:", error)
+    onFailure(id, error.message || "Upload failed") // Call failure callback
     toast({
       title: "Upload Failed",
       description: `Failed to upload ${file.name}: ${error.message || "Unknown error."}`,
       variant: "destructive",
-    });
+    })
   }
-};
+}

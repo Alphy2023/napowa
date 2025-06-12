@@ -1,325 +1,265 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState, useMemo } from "react";
-import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState, useMemo } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "@/components/ui/use-toast"
 import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search} from "lucide-react"; 
-import { Form } from "@/components/ui/form";
+  Edit,
+  Trash2,
+  Users,
+  Shield,
+  MoreHorizontal,
+  Copy,
+} from "lucide-react"
+import { useRoles } from "@/hooks/useRoles"
+import type { ViewMode, RoleFilters, PaginationParams, Role } from "@/types/roles"
+import { RESOURCES } from "@/types/roles"
+import PageFetchErrroUI from "@/components/page-fetch-error-ui"
+import { RoleListSkeleton } from "@/components/dashboard/roles/role-list-skeleton"
+import { RoleCardSkeleton } from "@/components/dashboard/roles/role-card-skeleton"
+import { AddRoleDialog } from "@/components/dashboard/roles/add-role-dialog"
+import FilterControlUI from "@/components/filter-control-ui"
+import { RoleCard } from "@/components/dashboard/roles/role-card"
+import { RoleListItem } from "@/components/dashboard/roles/role-list-card"
 
-const RESOURCES = {
-  dashboard: ["view"],
-  analytics: ["view"],
-  members: ["view", "create", "manage_roles"],
-  events: ["view", "create", "update", "delete"],
-  blog: ["view", "create", "update", "delete", "manage_categories"],
-  gallery: ["view", "create", "manage_albums"],
-  donations: ["view", "manage_campaigns", "read_reports"],
-  programs: ["view", "create"],
-  volunteers: ["view", "create"],
-  partners: ["view", "create"],
-  messages: ["view"],
-  meetings: ["view"],
-  announcements: ["view"],
-  notifications: ["view"],
-  reports: ["view"],
-  settings: ["view"],
-} as const;
 
-const RESOURCE_INFO: Record<
-  keyof typeof RESOURCES,
-  { title: string; description: string }
-> = {
-  dashboard: { title: "Dashboard", description: "Overview of key metrics and stats." },
-  analytics: { title: "Analytics", description: "Detailed data analysis and reports." },
-  members: { title: "Members", description: "Manage and view members of the platform." },
-  events: { title: "Events", description: "Organize and manage events." },
-  blog: { title: "Blog", description: "Manage blog posts and categories." },
-  gallery: { title: "Gallery", description: "Manage photo albums and images." },
-  donations: { title: "Donations", description: "Manage campaigns and reports." },
-  programs: { title: "Programs", description: "Manage programs offered." },
-  volunteers: { title: "Volunteers", description: "Manage volunteer information." },
-  partners: { title: "Partners", description: "Manage partner organizations." },
-  messages: { title: "Messages", description: "View and manage messages." },
-  meetings: { title: "Meetings", description: "Schedule and track meetings." },
-  announcements: { title: "Announcements", description: "Create and manage announcements." },
-  notifications: { title: "Notifications", description: "Manage notification settings." },
-  reports: { title: "Reports", description: "View generated reports." },
-  settings: { title: "Settings", description: "System and application settings." },
-};
-
-const resourceKeys = Object.keys(RESOURCES) as (keyof typeof RESOURCES)[];
-
-const RoleFormSchema = z.object({
-  roleName: z.string().min(1, "Role name is required"),
-  permissions: z.record(
-    z.enum(resourceKeys),
-    z.array(z.string()).optional()
-  ),
-});
-
-type RoleFormValues = z.infer<typeof RoleFormSchema>;
 
 export default function RolePermissionManager() {
-  const [existingRoles, setExistingRoles] = useState<string[]>([]);
-  const [filterText, setFilterText] = useState("");
-  const [openResources, setOpenResources] = useState<Record<string, boolean>>({});
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [filters, setFilters] = useState<RoleFilters>({
+    search: "",
+    sortBy: "name",
+    sortOrder: "asc",
+  })
+  const [pagination, setPagination] = useState<PaginationParams>({
+    page: 1,
+    limit: 12,
+  })
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isClone,setIsClone] = useState(false)
+ 
 
-  const form =useForm<RoleFormValues>({
-    resolver: zodResolver(RoleFormSchema),
-    defaultValues: {
-      roleName: "",
-      permissions: {},
-    },
-  });
+  const { data, loading, error, 
+     deleteRole, refetch } = useRoles(filters, pagination)
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
-    setValue,
-  } = form
 
-  const watchedRole = watch("roleName");
-  const watchedPermissions = watch("permissions");
+  // Filter and sort roles
+  const filteredRoles = useMemo(() => {
+    if (!data?.roles) return []
+    return data.roles
+  }, [data?.roles])
 
-  useEffect(() => {
-    fetch("/api/roles")
-      .then((res) => res.json())
-      .then((data) => setExistingRoles(data.roles))
-      .catch(console.error);
-  }, []);
+  const handleSearch = (value: string) => {
+    setFilters((prev) => ({ ...prev, search: value }))
+    setPagination((prev) => ({ ...prev, page: 1 }))
+  }
 
-  useEffect(() => {
-    if (existingRoles.includes(watchedRole)) {
-      fetch(`/api/roles/${encodeURIComponent(watchedRole)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setValue("permissions", data.permissions);
+  const handleSortChange = (sortBy: RoleFilters["sortBy"]) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: prev.sortBy === sortBy && prev.sortOrder === "asc" ? "desc" : "asc",
+    }))
+  }
+
+  const handleClose = ()=>{
+    refetch()
+    setSelectedRole(null)
+    setIsCreateDialogOpen(false)
+    setIsEditDialogOpen(false)
+    setIsClone(false)
+  }
+
+
+  const handleEdit = (role: Role) => {
+    setSelectedRole(role)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleClone = (role: Role) => {
+    setSelectedRole(role)
+    setIsCreateDialogOpen(true)
+    setIsClone(true)
+
+  }
+
+  const handleDelete = async (role: Role) => {
+    if (confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
+      const success = await deleteRole(role.id)
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Role deleted successfully",
         })
-        .catch(console.error);
+      }
     }
-  }, [watchedRole, existingRoles, setValue]);
+  }
 
-  const filteredResources = useMemo(() => {
-    const lower = filterText.toLowerCase();
-    return resourceKeys.filter((key) => {
-      const { title, description } = RESOURCE_INFO[key];
-      return (
-        title.toLowerCase().includes(lower) ||
-        description.toLowerCase().includes(lower) ||
-        key.toLowerCase().includes(lower)
-      );
-    });
-  }, [filterText]);
 
-  const toggleResourceOpen = (resource: string) => {
-    setOpenResources((prev) => ({ ...prev, [resource]: !prev[resource] }));
-  };
-
-  const toggleSelectAll = (resource: keyof typeof RESOURCES) => {
-    const current = new Set(watchedPermissions?.[resource] || []);
-    const all = RESOURCES[resource];
-    const allSelected = all.every((a) => current.has(a));
-    if (allSelected) {
-      setValue(`permissions.${resource}`, []);
-    } else {
-      setValue(`permissions.${resource}`, all);
-    }
-  };
-
-  const toggleSelectAllGlobal = () => {
-    const allSelected = resourceKeys.every((resource) =>
-      RESOURCES[resource].every((a) =>
-        watchedPermissions?.[resource]?.includes(a)
-      )
-    );
-
-    resourceKeys.forEach((resource) => {
-      setValue(
-        `permissions.${resource}`,
-        allSelected ? [] : [...RESOURCES[resource]]
-      );
-    });
-  };
-
-  const onSubmit = async (values: RoleFormValues) => {
-    try {
-      const res = await fetch("/api/roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      toast({ title: "Saved", description: `Role "${values.roleName}" updated.` });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Could not save role.",
-        variant: "destructive",
-      });
-    }
-  };
+  if (error) {
+    return (
+      <PageFetchErrroUI
+        error={error}
+        refetch={refetch}
+        title="roles"
+      />
+    )
+  }
 
   return (
-    <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto p-6 text-left">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="roleName">Role</Label>
-            <Controller
-              name="roleName"
-              control={control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select or type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {existingRoles.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <Input
-              id="roleName"
-              placeholder="Or type new role name"
-              {...register("roleName")}
-              className="mt-1"
-            />
-            {errors.roleName && (
-              <p className="text-sm text-red-600">{errors.roleName.message}</p>
-            )}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Role & Permission Management</h1>
+          <p className="text-muted-foreground">Manage user roles and their permissions across the system</p>
+        </div>
+
+        <AddRoleDialog
+        isEdit={false}
+        isDialogOpen={isCreateDialogOpen}
+        setIsDialogOpen={setIsCreateDialogOpen}
+        selectedRole={isClone && selectedRole}
+        handleClose={handleClose}
+
+        isClone={isClone}
+        />
+        
+      </div>
+
+      {/* Filters and Controls */}
+ 
+      <FilterControlUI
+        loading={loading}
+        filters={filters}
+        refetch={refetch}
+        handleSearch={handleSearch}
+        handleSortChange={handleSortChange}
+        setViewMode={setViewMode}
+        viewMode={viewMode}
+      />
+
+      {/* Roles Display */}
+      {loading ? (
+        viewMode === "grid" ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <RoleCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <RoleListSkeleton />
+        )
+      ) : (
+        <>
+          {viewMode === "grid" ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredRoles.map((role) => (
+                <RoleCard 
+                 key={role.id} 
+                 role={role}
+                 onEdit={handleEdit} 
+                 onDelete={handleDelete} onClone={handleClone} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredRoles.map((role) => (
+                <RoleListItem
+                  key={role.id}
+                  role={role}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onClone={handleClone}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredRoles.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Shield className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">No roles found</h3>
+                <p className="text-muted-foreground">
+                  {filters.search ? "Try adjusting your search criteria" : "Create your first role to get started"}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Pagination */}
+      {data && data.total > pagination.limit && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+            {Math.min(pagination.page * pagination.limit, data.total)} of {data.total} roles
+          </p>
+
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+            >
+              Previous
+            </Button>
+
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.ceil(data.total / pagination.limit) }, (_, i) => i + 1)
+                .filter(
+                  (page) =>
+                    page === 1 ||
+                    page === Math.ceil(data.total / pagination.limit) ||
+                    Math.abs(page - pagination.page) <= 2,
+                )
+                .map((page, index, array) => (
+                  <React.Fragment key={page}>
+                    {index > 0 && array[index - 1] !== page - 1 && (
+                      <span className="px-2 text-muted-foreground">...</span>
+                    )}
+                    <Button
+                      variant={pagination.page === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPagination((prev) => ({ ...prev, page }))}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                ))}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page >= Math.ceil(data.total / pagination.limit)}
+            >
+              Next
+            </Button>
           </div>
         </div>
+      )}
 
-        {/* Search Input with Icon */}
-        <div className="relative w-full max-w-md mt-6">
-          <Search className="absolute left-3 top-3.5 text-gray-400" />
-          <Input
-            className="pl-10"
-            placeholder="Search resources..."
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-          />
-        </div>
-
-        {/* Global Select All / Unselect All */}
-        <div className="flex justify-end mt-2">
-          <Button type="button" variant="outline" onClick={toggleSelectAllGlobal}>
-            Toggle All Permissions
-          </Button>
-        </div>
-
-        {/* Resource Permissions */}
-        <div className="space-y-4 mt-4">
-          {filteredResources.map((resource) => {
-            const { title, description } = RESOURCE_INFO[resource];
-            const isOpen = openResources[resource] ?? true;
-            const currentActions = watchedPermissions?.[resource] || [];
-            const allActions = RESOURCES[resource];
-            const allSelected = allActions.every((a) => currentActions.includes(a));
-
-            return (
-              <div key={resource} className="border rounded shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => toggleResourceOpen(resource)}
-                  className="w-full px-4 py-3 bg-gray-100 flex justify-between items-center focus:outline-none"
-                  aria-expanded={isOpen}
-                  aria-controls={`${resource}-content`}
-                >
-                  <div className="flex flex-col text-left">
-                    <span className="font-semibold text-lg">{title}</span>
-                    <span className="text-sm text-gray-600">{description}</span>
-                  </div>
-                  <span className="ml-2 text-xl select-none">{isOpen ? "−" : "+"}</span>
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      key="content"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-4 py-4 bg-white"
-                      id={`${resource}-content`}
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <Button type="button" size="sm" onClick={() => toggleSelectAll(resource)}>
-                          {allSelected ? "Unselect All" : "Select All"}
-                        </Button>
-                        <span className="text-sm text-gray-500">
-                          {currentActions.length} / {allActions.length} selected
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-6">
-                        {allActions.map((action) => {
-                          const fieldName = `permissions.${resource}` as const;
-                          const checked = currentActions.includes(action);
-                          return (
-                            <div key={action} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`${resource}_${action}`}
-                                checked={checked}
-                                onCheckedChange={(val) => {
-                                  const current = new Set(currentActions);
-                                  if (val) current.add(action);
-                                  else current.delete(action);
-                                  setValue(fieldName, Array.from(current));
-                                }}
-                              />
-                              <Label
-                                htmlFor={`${resource}_${action}`}
-                                className="capitalize cursor-pointer"
-                              >
-                                {action.replace(/_/g, " ")}
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : "Save Role"}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
+      {/* Edit Dialog */}
+       <AddRoleDialog
+        isEdit={true}
+        isDialogOpen={isEditDialogOpen}
+        setSelectedRole={setSelectedRole}
+        handleClose={handleClose}
+        selectedRole={selectedRole}
+        setIsDialogOpen={setIsEditDialogOpen}
+        />
+    </div>
+  )
 }
+

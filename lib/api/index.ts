@@ -4,6 +4,7 @@ import { ContactFormPayload, ContactUsSettings } from "@/schemas/contactUs.schem
 import { ApiResponse, useApiClient } from "./client";
 import { NotificationSettingsForm } from "@/schemas/notificationSettings.schema";
 import { LoginPayload, SignupPayload } from "@/schemas/auth.schema";
+import { Role, RoleFormData, RoleResponse } from "@/types/roles";
 
 // contact us api calls
   const apiClient = useApiClient();
@@ -152,4 +153,55 @@ export const authApi = {
     }
   },
   
+}
+// roles api
+export const roleApi = {
+  // create role
+  createRole: async (
+    data: RoleFormData
+  ): Promise<ApiResponse<Role>> => {
+    try {
+      let response = await apiClient.mutate.post<Role>("roles.create", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error while creating role.",
+        status: 500,
+      };
+    }
+  },
+  // get roles
+   getRoles: async (params:string): Promise<ApiResponse<RoleResponse>> => {
+    try {
+      const response = await apiClient.query<RoleResponse>("roles.list",{},params);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while fetching roles.",
+        status: 500,
+      };
+    }
+  },
+  // update role
+  updateRole: async (roleId:string, data: RoleFormData):
+   Promise<ApiResponse<Role>> => {
+    try {
+
+      let response = await apiClient.mutate.put<Role>("roles.update", data, {}, roleId);
+
+      // const response = await apiClient.put<Role>("roles.update",data,roleId);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while updating role.",
+        status: 500,
+      };
+    }
+  },
 }

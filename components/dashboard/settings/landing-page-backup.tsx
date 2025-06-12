@@ -1,36 +1,83 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { Camera, Save, Plus, Trash, ArrowUp, ArrowDown } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils"; // Assuming you have a utility for class concatenation
 
+// Zod Schema for a single slide
 const SlideSchema = z.object({
   id: z.string(),
-  image: z.string().min(1, "Image is required"),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  buttonText: z.string().min(1, "Primary button is required"),
-  buttonLink: z.string().min(1, "Primary button link is required"),
-  secondaryButtonText: z.string().min(1, "Secondary button is required"),
-  secondaryButtonLink: z.string().min(1, "Secondary button link is required"),
+  image: z.string().min(1, "Image is required."),
+  title: z.string().min(1, "Title is required."),
+  description: z.string().min(1, "Description is required."),
+  buttonText: z.string().min(1, "Primary button text is required."),
+  buttonLink: z.string().min(1, "Primary button link is required."),
+  secondaryButtonText: z.string().min(1, "Secondary button text is required."),
+  secondaryButtonLink: z.string().min(1, "Secondary button link is required."),
 });
 
+// Zod Schema for the entire form, which contains an array of slides
 const FormSchema = z.object({
-  slides: z.array(SlideSchema).min(1, "At least one slide is required"),
+  slides: z.array(SlideSchema).min(1, "At least one slide is required."),
 });
 
-type SlideType = z.infer<typeof SlideSchema>;
 type FormValues = z.infer<typeof FormSchema>;
 
-export const LandingPageSettings =()=> {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const DEFAULT_BUTTON_OPTIONS = [
+  "Donate Now",
+  "Our Programs",
+  "Our Impact",
+  "Partner With Us",
+  "Become a Member",
+  "Learn More",
+];
 
-  const form = useForm<FormValues>({
+const BUTTON_LINKS: Record<string, string> = {
+  "Donate Now": "/donate",
+  "Our Programs": "/programs",
+  "Our Impact": "/impact",
+  "Partner With Us": "/partner",
+  "Become a Member": "/auth/signup",
+  "Learn More": "/about",
+};
+
+export const LandingPageSettings = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [customButtons, setCustomButtons] = useState<string[]>([]);
+
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       slides: [
@@ -46,51 +93,16 @@ export const LandingPageSettings =()=> {
         },
       ],
     },
+    mode: "onChange", // Validate on change for better user feedback
   });
-
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-    register,
-  } = form;
 
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "slides",
   });
 
-  const onSubmit = handleSubmit(async (data) => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/landing-slides", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data.slides),
-      });
-
-      const resData = await res.json();
-      if (!res.ok) {
-        setError(resData.error || "An error occurred");
-      } else {
-        console.log("Success:", resData);
-      }
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  });
-
-  const handleSlideChange = (
-    index: number,
-    key: keyof SlideType,
-    value: string
-  ) => {
-    setValue(`slides.${index}.${key}`, value);
-  };
+  // Watch for changes in slides to re-evaluate filtered options
+  const slides = watch("slides");
 
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -100,12 +112,34 @@ export const LandingPageSettings =()=> {
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        handleSlideChange(index, "image", reader.result as string);
+        setValue(`slides.${index}.image`, reader.result as string, {
+          shouldValidate: true,
+        });
       };
       reader.readAsDataURL(file);
     } else {
       alert("Only image files are allowed.");
+      setValue(`slides.${index}.image`, "", { shouldValidate: true }); // Clear invalid image
     }
+  };
+
+ 
+
+  const getFilteredOptions = (currentIndex: number, isPrimary: boolean) => {
+    const used = new Set<string>();
+    slides.forEach((slide, i) => {
+      if (i === currentIndex) return;
+      if (slide.buttonText) used.add(slide.buttonText);
+      if (slide.secondaryButtonText) used.add(slide.secondaryButtonText);
+    });
+
+    const selectedOpposite = isPrimary
+      ? slides[currentIndex]?.secondaryButtonText
+      : slides[currentIndex]?.buttonText;
+
+    const allOptions = [...DEFAULT_BUTTON_OPTIONS, ...customButtons];
+
+    return allOptions.filter((btn) => !used.has(btn) && btn !== selectedOpposite);
   };
 
   const addSlide = () => {
@@ -122,146 +156,294 @@ export const LandingPageSettings =()=> {
   };
 
   const deleteSlide = (index: number) => {
+    if (fields.length === 1) {
+      alert("You must have at least one slide.");
+      return;
+    }
     remove(index);
   };
 
-  const moveSlide = (index: number, direction: "up" | "down") => {
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= fields.length) return;
-    move(index, newIndex);
+  const onSubmit = async (data: FormValues) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Simulate API call
+      // const res = await fetch("/api/landing-slides", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(data.slides),
+      // });
+
+      // const result = await res.json();
+      // if (res.ok) {
+      //   console.log("Slides saved successfully:", result);
+      //   // Optionally, you might want to reset the form or show a success message
+      // } else {
+      //   setError(result.error || `Error: ${res.status}`);
+      //   console.error("Error:", result.error);
+      // }
+
+      // For demonstration, log the validated data
+      console.log("Validated Slides Data:", data.slides);
+      alert("Form submitted successfully! Check console for data.");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+      console.error("Submission error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={onSubmit}>
-        {fields.map((field, index) => (
-          <div key={field.id} className="border p-4 rounded space-y-2">
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, index)}
+    <form onSubmit={handleSubmit(onSubmit)} className="relative space-y-8">
+      <CardHeader>
+        <CardTitle>Landing page hero sections</CardTitle>
+        <CardDescription>
+          Manage how you want your hero slides to look and what the general
+          public sees.
+        </CardDescription>
+      </CardHeader>
+      {fields.map((field, index) => (
+        <Card key={field.id}>
+          <CardHeader>
+            <CardTitle>Slide {index + 1}</CardTitle>
+            <CardDescription>Create and manage slide {index + 1}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div
+              className={cn(
+                "relative h-[200px] md:h-[400px] w-full bg-muted flex items-center justify-center rounded-md overflow-hidden",
+                errors.slides?.[index]?.image &&
+                  "border-2 border-destructive" // Highlight border on image error
+              )}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.type.startsWith("image/")) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setValue(`slides.${index}.image`, reader.result as string, {
+                      shouldValidate: true,
+                    });
+                  };
+                  reader.readAsDataURL(file);
+                } else {
+                  alert("Only image files are allowed.");
+                  setValue(`slides.${index}.image`, "", { shouldValidate: true });
+                }
+              }}
+            >
+              <label htmlFor={`file-upload-${index}`} className="relative w-full h-full cursor-pointer">
+                {slides[index]?.image ? (
+                  <>
+                    <Image
+                      src={slides[index].image}
+                      alt="Uploaded image"
+                      fill
+                      className="object-cover aspect-video"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/80 backdrop-blur-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          document.getElementById(`file-upload-${index}`)?.click();
+                        }}
+                      >
+                        Change Image
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground px-4">
+                    Click to upload an image or drag & drop here
+                  </div>
+                )}
+                <input
+                  id={`file-upload-${index}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e, index)}
+                />
+              </label>
+            </div>
+            {errors.slides?.[index]?.image && (
+              <p className="text-destructive text-sm mt-1">
+                {errors.slides[index]?.image?.message}
+              </p>
+            )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor={`title-${index}`}>Title</Label>
+              <Input
+                id={`title-${index}`}
+                {...control.register(`slides.${index}.title`)}
+                className={cn(
+                  errors.slides?.[index]?.title &&
+                  "border-destructive"
+                )}
               />
-              {errors.slides?.[index]?.image && (
-                <p className="text-red-500 text-sm">
-                  {errors.slides[index]?.image?.message}
+              {errors.slides?.[index]?.title && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.slides[index]?.title?.message}
                 </p>
               )}
-              {form.getValues(`slides.${index}.image`) && (
-                <img
-                  src={form.getValues(`slides.${index}.image`)}
-                  alt="Preview"
-                  className="w-32 h-32 object-cover mt-2"
-                />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`description-${index}`}>Description</Label>
+              <Textarea
+                id={`description-${index}`}
+                {...control.register(`slides.${index}.description`)}
+              />
+              {/* Description is optional, so no error message here */}
+            </div>
+
+            {/* Primary Button */}
+            <div className="space-y-2">
+              <Label htmlFor={`primary-button-text-${index}`}>Primary Button</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={slides[index]?.buttonText || ""}
+                  onValueChange={(value) => {
+                    setValue(`slides.${index}.buttonText`, value, {
+                      shouldValidate: true,
+                    });
+                    setValue(`slides.${index}.buttonLink`, BUTTON_LINKS[value] || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                >
+                  <SelectTrigger
+                    id={`primary-button-text-${index}`}
+                    className={cn(
+                      "w-full",
+                      errors.slides?.[index]?.buttonText &&
+                        "border-destructive"
+                    )}
+                  >
+                    <SelectValue placeholder="Select a primary button" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getFilteredOptions(index, true).map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+            
+              </div>
+              {errors.slides?.[index]?.buttonText && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.slides[index]?.buttonText?.message}
+                </p>
               )}
             </div>
-            <Input
-              placeholder="Title"
-              {...register(`slides.${index}.title`)}
-              onChange={(e) => handleSlideChange(index, "title", e.target.value)}
-            />
-            {errors.slides?.[index]?.title && (
-              <p className="text-red-500 text-sm">
-                {errors.slides[index]?.title?.message}
-              </p>
-            )}
 
-            <Input
-              placeholder="Description"
-              {...register(`slides.${index}.description`)}
-              onChange={(e) =>
-                handleSlideChange(index, "description", e.target.value)
-              }
-            />
-
-            <Input
-              placeholder="Primary Button"
-              {...register(`slides.${index}.buttonText`)}
-              onChange={(e) =>
-                handleSlideChange(index, "buttonText", e.target.value)
-              }
-            />
-            {errors.slides?.[index]?.buttonText && (
-              <p className="text-red-500 text-sm">
-                {errors.slides[index]?.buttonText?.message}
-              </p>
-            )}
-
-            <Input
-              placeholder="Primary Button Link"
-              {...register(`slides.${index}.buttonLink`)}
-              onChange={(e) =>
-                handleSlideChange(index, "buttonLink", e.target.value)
-              }
-            />
-            {errors.slides?.[index]?.buttonLink && (
-              <p className="text-red-500 text-sm">
-                {errors.slides[index]?.buttonLink?.message}
-              </p>
-            )}
-
-            <Input
-              placeholder="Secondary Button"
-              {...register(`slides.${index}.secondaryButtonText`)}
-              onChange={(e) =>
-                handleSlideChange(index, "secondaryButtonText", e.target.value)
-              }
-            />
-            {errors.slides?.[index]?.secondaryButtonText && (
-              <p className="text-red-500 text-sm">
-                {errors.slides[index]?.secondaryButtonText?.message}
-              </p>
-            )}
-
-            <Input
-              placeholder="Secondary Button Link"
-              {...register(`slides.${index}.secondaryButtonLink`)}
-              onChange={(e) =>
-                handleSlideChange(index, "secondaryButtonLink", e.target.value)
-              }
-            />
-            {errors.slides?.[index]?.secondaryButtonLink && (
-              <p className="text-red-500 text-sm">
-                {errors.slides[index]?.secondaryButtonLink?.message}
-              </p>
-            )}
-
-            <div className="flex space-x-2 mt-2">
+            {/* Secondary Button */}
+            <div className="space-y-2">
+              <Label htmlFor={`secondary-button-text-${index}`}>Secondary Button</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={slides[index]?.secondaryButtonText || ""}
+                  onValueChange={(value) => {
+                    setValue(`slides.${index}.secondaryButtonText`, value, {
+                      shouldValidate: true,
+                    });
+                    setValue(`slides.${index}.secondaryButtonLink`, BUTTON_LINKS[value] || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                >
+                  <SelectTrigger
+                    id={`secondary-button-text-${index}`}
+                    className={cn(
+                      "w-full",
+                      errors.slides?.[index]?.secondaryButtonText &&
+                        "border-destructive"
+                    )}
+                  >
+                    <SelectValue placeholder="Select a secondary button" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getFilteredOptions(index, false).map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+               
+              </div>
+              {errors.slides?.[index]?.secondaryButtonText && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.slides[index]?.secondaryButtonText?.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <div className="space-x-2">
               <Button
                 type="button"
-                variant="destructive"
-                onClick={() => deleteSlide(index)}
-              >
-                Delete Slide
-              </Button>
-              <Button
-                type="button"
-                onClick={() => moveSlide(index, "up")}
+                variant="outline"
+                size="sm"
+                onClick={() => move(index, index - 1)}
                 disabled={index === 0}
               >
-                Move Up
+                <ArrowUp className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
-                onClick={() => moveSlide(index, "down")}
+                variant="outline"
+                size="sm"
+                onClick={() => move(index, index + 1)}
                 disabled={index === fields.length - 1}
               >
-                Move Down
+                <ArrowDown className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-        ))}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteSlide(index)}
+              disabled={fields.length === 1} // Disable delete if only one slide
+            >
+              <Trash className="h-4 w-4 mr-1 text-destructive" />
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
 
-        <div className="flex space-x-2 mt-4">
-          <Button type="button" onClick={addSlide}>
-            Add Slide
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
+      {errors.slides?.message && (
+        <p className="text-destructive text-sm mt-1">
+          {errors.slides.message}
+        </p>
+      )}
+
+      <div className="flex justify-between items-center gap-4">
+        <Button type="button" onClick={addSlide} variant="outline">
+          <Plus className="mr-2 h-4 w-4" /> Add New Slide
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Save Changes"}
+          <Save className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+
+      {error && (
+        <div className="text-destructive text-sm text-center mt-4">
+          {error}
         </div>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-      </form>
-    </div>
-  );
+      )}
+    </form>
+  )
 }

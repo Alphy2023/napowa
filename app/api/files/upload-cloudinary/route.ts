@@ -65,7 +65,6 @@ export async function POST(req: Request) {
       height: result.height,
       bytes: result.bytes,
       original_filename: result.original_filename,
-      // Add any other relevant metadata from the Cloudinary result
     }, { status: 200 });
 
   } catch (error: any) {

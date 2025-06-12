@@ -10,47 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model User {
-//   id                String              @id @default(cuid())
-//   name              String?
-//   email             String              @unique
-//   password          String
-//   role              String              @default("user") // admin, user
-//   profileImage      String?
-//   bio               String?             @db.Text
-//   phone             String?
-//   address           String?
-//   city              String?
-//   county            String?
-//   postalCode        String?
-//   isEmailVerified   Boolean             @default(false)
-//   lastLogin         DateTime?
-//   createdAt         DateTime            @default(now())
-//   updatedAt         DateTime            @updatedAt
-//   members           Member[]
-//   blogs             Blog[]
-//   events            Event[]
-//   sentMessages      Message[]           @relation("SentMessages")
-//   receivedMessages  Message[]           @relation("ReceivedMessages")
-//   groupMemberships  GroupMember[]
-//   notifications     Notification[]
-//   meetingParticipants MeetingParticipant[]
-//   notificationSetting UserNotificationSetting?
-//   settings          UserSettings?
-
-//   pushSubscriptions PushSubscription[]
-// }
 model User {
   id       String   @id @default(cuid())
   email    String   @unique
   password String
-  // role     String   @default("user")
   roleId   String
   role     Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members           Member[]
   blogs             Blog[]
   events            Event[]
   sentMessages      Message[]           @relation("SentMessages")
@@ -63,7 +31,6 @@ model User {
   sessions          Session[]
   pushSubscriptions PushSubscription[]
 
-
   profile UserProfile?
 }
 model Role {
@@ -71,6 +38,8 @@ model Role {
   name        String   @unique
   permissions Json     // JSON object like { "events": ["read", "create"], "blog": ["read"] }
   users       User[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 }
 
 model UserProfile {
@@ -152,7 +121,6 @@ model Member {
   employment        Json?               // Store employment history
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
-  createdBy         User                @relation(fields: [userId], references: [id])
   userId            String
   eventRegistrations EventRegistration[]
 }
@@ -234,22 +202,26 @@ model Event {
 }
 
 model EventRegistration {
-  id                  String    @id @default(cuid())
+  id                  String     @id @default(cuid())
   firstName           String
   lastName            String
   email               String
   phone               String?
   organization        String?
-  specialRequirements String?   @db.Text
-  status              String    @default("confirmed") // confirmed, cancelled, attended
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  event               Event     @relation(fields: [eventId], references: [id])
+  specialRequirements String?    @db.Text
+  status              String     @default("confirmed") // confirmed, cancelled, attended
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  event               Event      @relation(fields: [eventId], references: [id])
   eventId             String
-  member              Member?   @relation(fields: [memberId], references: [id])
+  member              Member?    @relation(fields: [memberId], references: [id])
   memberId            String?
-}
 
+  // --- New fields for ticketing ---
+  ticketId            String     @unique @default(cuid()) // Unique ID for the ticket itself
+  qrCodeData          String     @unique // The data encoded in the QR code (e.g., a URL or unique string)
+  // ---------------------------------
+}
 model Donation {
   id                String    @id @default(cuid())
   amount            Float
@@ -295,8 +267,6 @@ model Partner {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
-
-
 
 model Announcement {
   id                String    @id @default(cuid())
@@ -431,7 +401,7 @@ model LandingPageSlide {
   id                  String   @id @default(uuid())
   title               String
   description         String
-  image               String
+  image               Json
   buttonText          String
   buttonLink          String
   secondaryButtonText String?

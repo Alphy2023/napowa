@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx"
+import { getFirstDynamicReason } from "next/dist/server/app-render/dynamic-rendering";
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -20,6 +21,11 @@ export function formatBytes(bytes: number | undefined, decimals = 2): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+export const getFullname = (firstname:string,lastname:string)=>{
+  if(!lastname) return firstname+" "
+  return firstname +" "+ lastname;
 }
 export const FIELDTYPES = {
   INPUT:"input",

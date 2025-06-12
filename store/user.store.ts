@@ -1,14 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface User {
   id: string;
-  name: string;
   email: string;
-  image?: string;
+  avatar?: string;
   role: string;
+  profile:any;
   permissions: Record<string, string[]>;
-  // Add other fields as needed
 }
 
 type UserState = {

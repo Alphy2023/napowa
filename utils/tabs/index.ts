@@ -1,4 +1,5 @@
 import { TabItem } from "@/types";
+import { RESOURCE_CATEGORIES } from "@/types/roles";
 
 
  export const settingsPageTabs: TabItem[] = [
@@ -35,4 +36,43 @@ import { TabItem } from "@/types";
       title:"Privacy",
       id:"privacy"
     },
+];
+ export const analyticsPageTabs: TabItem[] = [
+   
+    {
+      title:"Overview",
+      id:"overview"
+    },
+    {
+      title:"Members",
+      id:"members"
+    },
+    {
+      title:"Donations",
+      id:"donations"
+    },
+    {
+      title:"Events",
+      id:"events"
+    },
+    {
+      title:"Programs",
+      id:"programs"
+    },
+];
+
+
+  const permissionsResources = Object.keys(RESOURCE_CATEGORIES)
+  .map((category) => {
+    return {
+      id:category,
+      title:category
+    }
+  })
+ export const rolePermissionResourcesTabs: TabItem[] = [
+    {
+      title:"All resources",
+      id:"all"
+    },
+    ...permissionsResources
 ];

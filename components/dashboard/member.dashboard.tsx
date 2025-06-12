@@ -4,17 +4,22 @@ import { motion } from "framer-motion"
 import { Calendar, DollarSign, Heart } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function MemberDashboardPage() {
+export default function MemberDashboard() {
   const recentDonations = [
     { id: 1, amount: 1500, date: "2023-08-21", method: "M-Pesa" },
     { id: 2, amount: 2000, date: "2023-07-19", method: "Bank Transfer" },
   ]
 
-  const upcomingEvents = [
-    { id: 1, title: "Community Clean-Up", date: "2023-09-02", location: "Local Church Grounds" },
-    { id: 2, title: "Youth Retreat", date: "2023-09-15", location: "Naivasha" },
-  ]
+  // const upcomingEvents = [
+  //   { id: 1, title: "Community Clean-Up", date: "2023-09-02", location: "Local Church Grounds" },
+  //   { id: 2, title: "Youth Retreat", date: "2023-09-15", location: "Naivasha" },
+  // ]
 
+   const upcomingEvents = [
+    { id: 1, title: "Woman of Purpose Annual Event", date: "2023-06-15", location: "Nairobi" },
+    { id: 2, title: "Skills Training Workshop", date: "2023-06-22", location: "Mombasa" },
+    { id: 3, title: "Health Advocacy Program", date: "2023-07-05", location: "Kisumu" },
+  ]
   return (
     <div className="space-y-8">
       <div className="flex flex-col justify-between space-y-2 md:flex-row md:items-center md:space-y-0">

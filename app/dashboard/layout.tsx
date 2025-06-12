@@ -34,6 +34,7 @@ export default function DashboardLayout({
         <div className="napowa-stripes-top"></div>
         {/* Mobile header - Fixed */}
         <DashboardNavbar/>
+        
 
         <div className="flex flex-1 pt-16 lg:pt-0">
         <DashboardSidebar/>
