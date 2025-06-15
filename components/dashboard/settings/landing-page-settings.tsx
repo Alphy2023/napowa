@@ -464,11 +464,12 @@ export const LandingPageSettings = () => {
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, slideIndex)}
       >
-        <label htmlFor={`file-upload-${slideIndex}`} className="relative w-full h-full cursor-pointer block">
+        <label htmlFor={`file-upload-${slideIndex}`}
+         className="relative w-full h-full cursor-pointer block">
           {hasImage && !isUploading ? (
             <>
               <Image
-                src={slide.image.url || "/placeholder.svg"}
+                src={slide?.image?.url || "/placeholder.svg"}
                 alt="Uploaded slide image"
                 fill
                 className="object-cover rounded-lg"
@@ -509,7 +510,8 @@ export const LandingPageSettings = () => {
             <div className="flex flex-col items-center justify-center h-full p-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
               <p className="text-sm font-medium text-primary mb-2">Uploading...</p>
-              <Progress value={uploadingImage.progress} className="w-full max-w-xs" />
+              <Progress value={uploadingImage.progress}
+               className="w-full max-w-xs h-2" />
               <p className="text-xs text-muted-foreground mt-1">{Math.round(uploadingImage.progress)}%</p>
             </div>
           ) : hasError ? (
@@ -550,7 +552,7 @@ export const LandingPageSettings = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br 
-    from-slate-50 to-slate-100 p-4 rounded-md">
+    from-slate-50p to-slate-100p p-4 rounded-md">
       <div className="max-w-4xl mx-auto">
         {slidesLoading && !data ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -571,7 +573,8 @@ export const LandingPageSettings = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {/* Header */}
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+              <div className="inline-flex items-center 
+              justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
                 <Camera className="h-8 w-8 text-primary" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">Landing Page Settings</h1>
@@ -583,19 +586,26 @@ export const LandingPageSettings = () => {
             {/* Slides */}
             <div className="space-y-6">
               {fields.map((field, index) => (
-                <Card key={field.id} className="overflow-hidden shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                  <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                <Card key={field.id} className="overflow-hidden 
+                shadow-lg border bg-white/80p dark:bg-transparentp
+                 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-primary/5
+                   to-primary/10 border-b">
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="flex items-center gap-2">
-                          <span className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-sm font-bold">
+                          <span className="flex items-center 
+                          justify-center w-6 h-6 bg-primary 
+                          text-primary-foreground rounded-full
+                           text-sm font-bold">
                             {index + 1}
                           </span>
                           Slide {index + 1}
                         </CardTitle>
                         <CardDescription>Configure the content and appearance of slide {index + 1}</CardDescription>
                       </div>
-                      <Badge variant="outline" className="bg-white/50">
+                      <Badge variant="outline" 
+                      className="bg-white/50">
                         {slides[index]?.image ? "Ready" : "Draft"}
                       </Badge>
                     </div>
@@ -607,7 +617,8 @@ export const LandingPageSettings = () => {
                       <Label className="text-base font-semibold">Hero Image</Label>
                       {renderImageUploadArea(index)}
                       {errors.slides?.[index]?.image && (
-                        <p className="text-destructive text-sm flex items-center gap-1">
+                        <p className="text-destructive text-sm 
+                        flex items-center gap-1">
                           <AlertCircle className="h-4 w-4" />
                           Image is required for this slide
                         </p>
@@ -618,7 +629,8 @@ export const LandingPageSettings = () => {
 
                     {/* Title */}
                     <div className="space-y-2">
-                      <Label htmlFor={`title-${index}`} className="text-base font-semibold">
+                      <Label htmlFor={`title-${index}`} 
+                      className="text-sm font-semibold">
                         Title
                       </Label>
                       <Input
@@ -626,8 +638,9 @@ export const LandingPageSettings = () => {
                         placeholder="Enter a compelling title..."
                         {...control.register(`slides.${index}.title`)}
                         className={cn(
-                          "text-lg",
-                          errors.slides?.[index]?.title && "border-destructive focus-visible:ring-destructive",
+                          "text-sm",
+                          errors.slides?.[index]?.title
+                           && "border-destructive focus-visible:ring-destructive",
                         )}
                       />
                       {errors.slides?.[index]?.title && (
@@ -640,20 +653,24 @@ export const LandingPageSettings = () => {
 
                     {/* Description */}
                     <div className="space-y-2">
-                      <Label htmlFor={`description-${index}`} className="text-base font-semibold">
+                      <Label htmlFor={`description-${index}`}
+                       className="text-sm font-semibold">
                         Description
                       </Label>
                       <Textarea
                         id={`description-${index}`}
-                        placeholder="Write a description that captures your mission..."
+                        placeholder="Write a description that 
+                        captures your mission..."
                         rows={3}
                         {...control.register(`slides.${index}.description`)}
-                        className={cn(
-                          errors.slides?.[index]?.description && "border-destructive focus-visible:ring-destructive",
+                        className={cn("text-sm",
+                          errors.slides?.[index]?.description 
+                          && "border-destructive focus-visible:ring-destructive",
                         )}
                       />
                       {errors.slides?.[index]?.description && (
-                        <p className="text-destructive text-sm flex items-center gap-1">
+                        <p className="text-destructive text-sm
+                         flex items-center gap-1">
                           <AlertCircle className="h-4 w-4" />
                           {errors.slides[index]?.description?.message}
                         </p>
@@ -664,7 +681,7 @@ export const LandingPageSettings = () => {
                     <div className="grid md:grid-cols-2 gap-4">
                       {/* Primary Button */}
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Primary Button</Label>
+                        <Label className="text-sm font-semibold">Primary Button</Label>
                         <Select
                           value={slides[index]?.buttonText || ""}
                           onValueChange={(value) => {
@@ -693,7 +710,7 @@ export const LandingPageSettings = () => {
 
                       {/* Secondary Button */}
                       <div className="space-y-2">
-                        <Label className="text-base font-semibold">Secondary Button</Label>
+                        <Label className="text-sm font-semibold">Secondary Button</Label>
                         <Select
                           value={slides[index]?.secondaryButtonText || ""}
                           onValueChange={(value) => {
@@ -726,8 +743,9 @@ export const LandingPageSettings = () => {
                     </div>
                   </CardContent>
 
-                  <CardFooter className="bg-muted/30 border-t flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <CardFooter className="bg-muted/30 border-t
+                   flex justify-between items-center">
+                    <div className="flex items-center gap-2 mt-3">
                       <Button
                         type="button"
                         variant="outline"

@@ -49,7 +49,7 @@ export const LoginForm = ({ form,loading=false}: LoginFormProps) => {
                   placeholder="************"
                 />
                 <div className="flex items-center justify-end">
-                <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
+                <Link href="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
                   Forgot password?
                 </Link>
               </div>

@@ -23,6 +23,15 @@ export function formatBytes(bytes: number | undefined, decimals = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+export const isVideoFormat = (format: string | undefined | null) => { 
+  const videoFormats = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'webm', 'mkv'];
+  // a check to ensure format is a string before calling toLowerCase()
+  if (typeof format !== 'string') {
+    return false;
+  }
+  return videoFormats.includes(format.toLowerCase());
+};
+
 export const getFullname = (firstname:string,lastname:string)=>{
   if(!lastname) return firstname+" "
   return firstname +" "+ lastname;

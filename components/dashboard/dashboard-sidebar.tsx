@@ -129,20 +129,16 @@ const navigationItems = [
     permission: { resource: "gallery", action: "view" },
     children: [
       {
-        title: "All Images",
+        title: "All Media",
         href: "/dashboard/gallery",
         permission: { resource: "gallery", action: "view" },
       },
       {
-        title: "Upload Images",
+        title: "Upload Media",
         href: "/dashboard/gallery/upload",
         permission: { resource: "gallery", action: "create" },
       },
-      {
-        title: "Albums",
-        href: "/dashboard/gallery/albums",
-        permission: { resource: "gallery", action: "manage_albums" },
-      },
+    
     ],
   },
   {

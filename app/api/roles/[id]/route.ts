@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import type { RoleFormData } from "@/types/roles"
 
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body: RoleFormData = await request.json()

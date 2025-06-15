@@ -1,200 +1,157 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import type { Media } from "@/types/media"
-import { Play, ImageIcon, Edit, Trash } from "lucide-react"
-import { MediaUploadForm } from "./media-upload-form"
-import { useMedia } from "@/hooks/useMedia"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { isVideoFormat } from "@/lib/utils"
+import { GalleryItemResponse } from "@/types/gallery"
+import { Edit, Eye, ImageIcon, MoreHorizontal,
+   Play, Trash2, Video } from "lucide-react"
 
-interface MediaCardProps {
-  media: Media
+
+interface MediaCardProps{
+  galleryEntry: GalleryItemResponse 
+  onDelete: (media: GalleryItemResponse ) => void
+  onEdit: (mediaId: string ) => void
+  onPreview: (mediaId:string ) => void
+  canManage?:boolean;
 }
 
-export function MediaCard({ media }: MediaCardProps) {
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const { updateMedia, deleteMedia } = useMedia()
 
-  const handleUpdate = async (formData: any) => {
-    await updateMedia(media.id, formData)
-    setIsEditOpen(false)
-  }
-
-  const handleDelete = async () => {
-    await deleteMedia(media.id)
-    setIsDeleteDialogOpen(false)
-  }
-
-  const renderThumbnail = () => {
-    if (media.type === "video") {
-      return (
-        <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
-          <img
-            src={media.thumbnailUrl || "/placeholder.svg?height=200&width=300"}
-            alt={media.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-full bg-black/50 hover:bg-black/70"
-              onClick={() => setIsPreviewOpen(true)}
-            >
-              <Play className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
-      )
-    } else {
-      return (
-        <div
-          className="aspect-video bg-muted rounded-md overflow-hidden cursor-pointer"
-          onClick={() => setIsPreviewOpen(true)}
-        >
-          <img
-            src={media.url || "/placeholder.svg"}
-            alt={media.title}
-            className="w-full h-full object-cover hover:scale-105 transition-transform"
-          />
-        </div>
-      )
-    }
-  }
-
-  const renderMediaPreview = () => {
-    if (media.type === "video") {
-      // Handle YouTube videos
-      if (media.url.includes("youtube.com") || media.url.includes("youtu.be")) {
-        const videoId = media.url.includes("youtu.be")
-          ? media.url.split("/").pop()
-          : new URLSearchParams(new URL(media.url).search).get("v")
-
-        return (
-          <iframe
-            width="100%"
-            height="400"
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title={media.title}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        )
-      }
-
-      // Handle Vimeo videos
-      if (media.url.includes("vimeo.com")) {
-        const videoId = media.url.split("/").pop()
-
-        return (
-          <iframe
-            width="100%"
-            height="400"
-            src={`https://player.vimeo.com/video/${videoId}`}
-            title={media.title}
-            frameBorder="0"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        )
-      }
-
-      // Handle direct video files
-      return (
-        <video controls className="w-full max-h-[70vh]" src={media.url}>
-          Your browser does not support the video tag.
-        </video>
-      )
-    } else {
-      return (
-        <img src={media.url || "/placeholder.svg"} alt={media.title} className="w-full max-h-[70vh] object-contain" />
-      )
-    }
-  }
+export const MediaCard =({
+  galleryEntry,
+  onDelete,
+  onEdit,
+  onPreview,
+  canManage=false
+}:MediaCardProps)=> {
+  const fileType = isVideoFormat(galleryEntry?.media[0]?.format) ? "video" : "image"; // Determine type from format
+  const additionalMediaCount = (galleryEntry?.media?.length || 0) > 1 ?
+   (galleryEntry.media.length - 1) : 0;
 
   return (
-    <>
-      <Card>
-        <CardContent className="p-3">
-          {renderThumbnail()}
-          <div className="mt-2">
-            <h3 className="font-medium truncate">{media.title}</h3>
-            <p className="text-xs text-muted-foreground">{media.category}</p>
+    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+      <CardHeader className="p-0">
+        <div className="relative group">
+          {fileType === "image" ? ( // Use fileType here
+            <img
+              src={(galleryEntry?.media && galleryEntry?.media?.length > 0
+                && galleryEntry?.media[0]?.url) || "/placeholder.svg"}
+              alt={galleryEntry.title}
+              className="h-full w-full rounded-md object-cover"
+              onClick={() => onPreview(galleryEntry.id)}
+            />
+          ) : (
+            <div className="h-48 w-full bg-black relative cursor-pointer" 
+            onClick={() => onPreview(galleryEntry.id)}>
+              <img
+                src={galleryEntry?.media[0]?.url || "/placeholder.svg?height=200&width=400"}
+                alt={galleryEntry.title}
+                className="h-full w-full object-cover opacity-70"
+              />
+              <div className="absolute inset-0 flex items-center
+               justify-center">
+                <Play className="h-12 w-12 text-white opacity-80" />
+              </div>
+            </div>
+          )}
+          <div className="absolute top-2 right-2 flex space-x-1"> 
+            <Badge variant={fileType === "image" ? "default" : "secondary"}>
+              {fileType === "image" ? <ImageIcon className="mr-1 h-3 w-3" /> 
+              : <Video className="mr-1 h-3 w-3" />} 
+              {fileType.charAt(0).toUpperCase() + fileType.slice(1)} 
+            </Badge>
+            {additionalMediaCount > 0 && (
+              <div className="bg-black/30 rounded-lg">
+                <Badge variant="outline" className="text-white">
+                  {additionalMediaCount}+ more
+                </Badge>
+                </div>
+            )}
           </div>
-        </CardContent>
-        <CardFooter className="p-3 pt-0 flex justify-between">
-          <Button variant="ghost" size="sm" className="text-xs" onClick={() => setIsPreviewOpen(true)}>
-            {media.type === "video" ? <Play className="h-3 w-3 mr-1" /> : <ImageIcon className="h-3 w-3 mr-1" />}
-            View
-          </Button>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setIsEditOpen(true)}>
-              <Edit className="h-3 w-3 mr-1" />
-              Edit
-            </Button>
+          <div className="absolute inset-0
+           bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
-              onClick={() => setIsDeleteDialogOpen(true)}
+              className="mr-2"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPreview(galleryEntry.id)
+              }}
             >
-              <Trash className="h-3 w-3 mr-1" />
-              Delete
+              <Eye className="h-4 w-4" />
             </Button>
+            {canManage && (
+              <>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mr-2"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(galleryEntry.id)
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(galleryEntry)
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              </>
+            )}
           </div>
-        </CardFooter>
-      </Card>
-
-      {/* Preview Dialog */}
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[800px] p-1 sm:p-6">
-          {renderMediaPreview()}
-          <div className="p-4">
-            <h2 className="text-xl font-semibold">{media.title}</h2>
-            {media.description && <p className="mt-2 text-muted-foreground">{media.description}</p>}
-            <p className="mt-2 text-sm">Category: {media.category}</p>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium line-clamp-1">{galleryEntry.title}</h3>
+             <div className="flex flex-wrap justify-center
+              gap-2 text-sm line-clamp-1 text-muted-foreground">
+                <span>{galleryEntry.album}</span>
+                <span>•</span>
+                <span>{galleryEntry.county}</span>
+                <span>•</span>
+                <span>{galleryEntry.yearTaken}</span>
+              </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[550px]">
-          <h2 className="text-xl font-semibold mb-4">Edit Media</h2>
-          <MediaUploadForm
-            onSubmit={handleUpdate}
-            initialValues={{
-              title: media.title,
-              description: media.description || "",
-              type: media.type,
-              url: media.url,
-              thumbnailUrl: media.thumbnailUrl || "",
-              category: media.category,
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <h2 className="text-xl font-semibold mb-4">Delete Media</h2>
-          <p>Are you sure you want to delete "{media.title}"? This action cannot be undone.</p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onPreview(galleryEntry.id)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              {canManage && (
+                <>
+                
+                <DropdownMenuItem onClick={() => onEdit(galleryEntry.id)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete(galleryEntry)} className="text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

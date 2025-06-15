@@ -15,7 +15,7 @@ interface ScrollableTabsProps {
 const ScrollableTablist: React.FC<ScrollableTabsProps> = ({ items,noCenter=false }) => {
   return (
     <TabsList className={`mb-4 flex flex-nowrap 
-      justify-start gap-2 tab-list lg:max-w-lg max-w-xs md:max-w-sm
+      justify-start gap-2 tab-list lg:max-w-lgp max-w-xsp md:max-w-smp
      overflow-x-auto hide-scrollbar 
      ${!noCenter && "md:justify-center"} md:gap-4 `}>
       {items?.map((item) => (

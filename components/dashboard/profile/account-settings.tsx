@@ -1,159 +1,357 @@
 "use client"
 
-import React from "react"
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-
-import {
-  Save,
- 
-} from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Loader2, Save, Facebook, Twitter, Linkedin, AlertCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { useProfileSettings } from "@/hooks/useProfileSettings"
+import { accountSettingsSchema, type AccountSettingsValues } from "@/schemas/profile.schema"
+import type { ConnectedAccount } from "@/types/profile"
 
 export const AccountSettings = () => {
-    const [language, setLanguage] = React.useState<string>("en")
-    const [timezone, setTimezone] = React.useState("Africa/Nairobi")
+  const { toast } = useToast()
+  const { profile, loading, error, isSaving, 
+    updateAccountSettings, connectSocialAccount, 
+    disconnectSocialAccount } =
+    useProfileSettings()
+  const [isConnecting, setIsConnecting] = useState<Record<string, boolean>>({})
 
+  // Initialize form with react-hook-form and zod validation
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isDirty },
+  } = useForm<AccountSettingsValues>({
+    resolver: zodResolver(accountSettingsSchema),
+    defaultValues: {
+      language: "en",
+      timezone: "UTC",
+      connectedAccounts: [],
+      emailNotifications: true,
+      pushNotifications: true,
+    },
+  })
 
-    const handleSaveAccount = ()=>{
-        
+  // Watch form values
+  const language = watch("language")
+  const timezone = watch("timezone")
+  const emailNotifications = watch("emailNotifications")
+  const pushNotifications = watch("pushNotifications")
+
+  // Update form values when profile data is loaded
+  useEffect(() => {
+    if (profile) {
+      reset({
+        language: profile.language || "en",
+        timezone: profile.timezone || "UTC",
+        connectedAccounts: profile.connectedAccounts || [],
+        emailNotifications: profile.emailNotifications !== undefined ? profile.emailNotifications : true,
+        pushNotifications: profile.pushNotifications !== undefined ? profile.pushNotifications : true,
+      })
     }
+  }, [profile, reset])
+
+  // Handle form submission
+  const onSubmit = async (data: AccountSettingsValues) => {
+    const result = await updateAccountSettings(data)
+    if (result) {
+      // Reset form dirty state
+      reset(data)
+    }
+  }
+
+  // Handle social account connection
+  const handleConnectAccount = async (provider: string) => {
+    setIsConnecting((prev) => ({ ...prev, [provider]: true }))
+    try {
+      const isConnected = await connectSocialAccount(provider)
+      if (isConnected) {
+        // Update the form state with the new connected account
+        const currentAccounts = watch("connectedAccounts") || []
+        const existingIndex = currentAccounts.findIndex((acc) => acc.provider === provider)
+
+        if (existingIndex >= 0) {
+          const updatedAccounts = [...currentAccounts]
+          updatedAccounts[existingIndex] = {
+            ...updatedAccounts[existingIndex],
+            isConnected: true,
+            lastConnected: new Date().toISOString(),
+          }
+          setValue("connectedAccounts", updatedAccounts, { shouldDirty: true })
+        } else {
+          const newAccount: ConnectedAccount = {
+            provider,
+            isConnected: true,
+            accountId: `${provider}-${Date.now()}`,
+            lastConnected: new Date().toISOString(),
+          }
+          setValue("connectedAccounts", [...currentAccounts, newAccount], { shouldDirty: true })
+        }
+      }
+    } finally {
+      setIsConnecting((prev) => ({ ...prev, [provider]: false }))
+    }
+  }
+
+  // Handle social account disconnection
+  const handleDisconnectAccount = async (provider: string) => {
+    setIsConnecting((prev) => ({ ...prev, [provider]: true }))
+    try {
+      const isDisconnected = await disconnectSocialAccount(provider)
+      if (isDisconnected) {
+        // Update the form state
+        const currentAccounts = watch("connectedAccounts") || []
+        const updatedAccounts = currentAccounts.map((acc) =>
+          acc.provider === provider ? { ...acc, isConnected: false } : acc,
+        )
+        setValue("connectedAccounts", updatedAccounts, { shouldDirty: true })
+      }
+    } finally {
+      setIsConnecting((prev) => ({ ...prev, [provider]: false }))
+    }
+  }
+
+  // Check if a social account is connected
+  const isAccountConnected = (provider: string): boolean => {
+    const accounts = watch("connectedAccounts") || []
+    return accounts.some((acc) => acc.provider === provider && acc.isConnected)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading account settings...</span>
+      </div>
+    )
+  }
+
+  if (error && !profile) {
+    return (
+      <div className="p-8 text-center">
+        <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+        <h3 className="text-lg font-semibold mb-2">Failed to load account settings</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <div>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <Card>
-        <CardHeader>
-        <CardTitle>Account Settings</CardTitle>
-        <CardDescription>Manage your account preferences and settings.</CardDescription>
-        </CardHeader>
-        <CardContent>
-        <form onSubmit={handleSaveAccount} className="space-y-6">
+          <CardHeader>
+            <CardTitle>Account Settings</CardTitle>
+            <CardDescription>Manage your account preferences and settings.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
+                  <Label htmlFor="language">Language</Label>
+                  <Select
+                    value={language}
+                    onValueChange={(value) => setValue("language", value, { shouldDirty: true })}
+                  >
                     <SelectTrigger id="language">
-                    <SelectValue placeholder="Select language" />
+                      <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="sw">Swahili</SelectItem>
-                    <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="sw">Swahili</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
                     </SelectContent>
-                </Select>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                <Label htmlFor="timezone">Timezone</Label>
-                <Select value={timezone} onValueChange={setTimezone}>
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select
+                    value={timezone}
+                    onValueChange={(value) => setValue("timezone", value, { shouldDirty: true })}
+                  >
                     <SelectTrigger id="timezone">
-                    <SelectValue placeholder="Select timezone" />
+                      <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent>
-                    <SelectItem value="Africa/Nairobi">East Africa Time (EAT)</SelectItem>
-                    <SelectItem value="UTC">Coordinated Universal Time (UTC)</SelectItem>
-                    <SelectItem value="Europe/London">Greenwich Mean Time (GMT)</SelectItem>
+                      <SelectItem value="Africa/Nairobi">East Africa Time (EAT)</SelectItem>
+                      <SelectItem value="UTC">Coordinated Universal Time (UTC)</SelectItem>
+                      <SelectItem value="Europe/London">Greenwich Mean Time (GMT)</SelectItem>
+                      <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
                     </SelectContent>
-                </Select>
+                  </Select>
                 </div>
-            </div>
+              </div>
 
-            <Separator />
+              <Separator />
 
-            <h3 className="text-lg font-medium">Connected Accounts</h3>
-            <div className="space-y-4">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Notification Preferences</h3>
                 <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                    </svg>
-                    </div>
-                    <div>
-                    <p className="font-medium">Facebook</p>
-                    <p className="text-xs text-muted-foreground">Not Connected</p>
-                    </div>
-                </div>
-                <Button variant="outline" size="sm">
-                    Connect
-                </Button>
+                  <div>
+                    <Label htmlFor="emailNotifications" className="text-base">
+                      Email Notifications
+                    </Label>
+                    <p className="text-sm text-muted-foreground">Receive email notifications about account activity</p>
+                  </div>
+                  <Switch
+                    id="emailNotifications"
+                    checked={emailNotifications}
+                    onCheckedChange={(checked) => setValue("emailNotifications", checked, { shouldDirty: true })}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                  <div>
+                    <Label htmlFor="pushNotifications" className="text-base">
+                      Push Notifications
+                    </Label>
+                    <p className="text-sm text-muted-foreground">Receive push notifications on your devices</p>
+                  </div>
+                  <Switch
+                    id="pushNotifications"
+                    checked={pushNotifications}
+                    onCheckedChange={(checked) => setValue("pushNotifications", checked, { shouldDirty: true })}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <h3 className="text-lg font-medium">Connected Accounts</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                    </svg>
+                      <Facebook className="h-4 w-4" />
                     </div>
                     <div>
-                    <p className="font-medium">Twitter</p>
-                    <p className="text-xs text-muted-foreground">Not Connected</p>
+                      <p className="font-medium">Facebook</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAccountConnected("facebook") ? "Connected" : "Not Connected"}
+                      </p>
                     </div>
-                </div>
-                <Button variant="outline" size="sm">
-                    Connect
-                </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={isAccountConnected("facebook") ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() =>
+                      isAccountConnected("facebook")
+                        ? handleDisconnectAccount("facebook")
+                        : handleConnectAccount("facebook")
+                    }
+                    disabled={isConnecting["facebook"]}
+                  >
+                    {isConnecting["facebook"] ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : isAccountConnected("facebook") ? (
+                      "Disconnect"
+                    ) : (
+                      "Connect"
+                    )}
+                  </Button>
                 </div>
                 <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                        <rect x="2" y="9" width="4" height="12"></rect>
-                        <circle cx="4" cy="4" r="2"></circle>
-                    </svg>
+                      <Twitter className="h-4 w-4" />
                     </div>
                     <div>
-                    <p className="font-medium">LinkedIn</p>
-                    <p className="text-xs text-muted-foreground">Not Connected</p>
+                      <p className="font-medium">Twitter</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAccountConnected("twitter") ? "Connected" : "Not Connected"}
+                      </p>
                     </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={isAccountConnected("twitter") ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() =>
+                      isAccountConnected("twitter")
+                        ? handleDisconnectAccount("twitter")
+                        : handleConnectAccount("twitter")
+                    }
+                    disabled={isConnecting["twitter"]}
+                  >
+                    {isConnecting["twitter"] ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : isAccountConnected("twitter") ? (
+                      "Disconnect"
+                    ) : (
+                      "Connect"
+                    )}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm">
-                    Connect
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                      <Linkedin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">LinkedIn</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAccountConnected("linkedin") ? "Connected" : "Not Connected"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={isAccountConnected("linkedin") ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() =>
+                      isAccountConnected("linkedin")
+                        ? handleDisconnectAccount("linkedin")
+                        : handleConnectAccount("linkedin")
+                    }
+                    disabled={isConnecting["linkedin"]}
+                  >
+                    {isConnecting["linkedin"] ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : isAccountConnected("linkedin") ? (
+                      "Disconnect"
+                    ) : (
+                      "Connect"
+                    )}
+                  </Button>
                 </div>
+              </div>
             </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <div>
+              {isDirty && (
+                <p className="text-sm text-muted-foreground flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  You have unsaved changes
+                </p>
+              )}
             </div>
-        </form>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-        <Button type="submit" onClick={handleSaveAccount}>
-            <Save className="mr-2 h-4 w-4" />
-            Save changes
-        </Button>
-        </CardFooter>
-    </Card>
+            <Button type="submit" disabled={isSaving || !isDirty}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save changes
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
     </div>
   )
 }

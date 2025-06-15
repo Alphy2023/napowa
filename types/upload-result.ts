@@ -1,5 +1,5 @@
 export interface CloudinaryUploadResult {
-  success: boolean
+  success?: boolean
   url: string
   public_id: string
   asset_id: string

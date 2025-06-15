@@ -125,6 +125,7 @@ export default function SignupPage() {
                 <AuthCard
                 authType="signup"
                 form={form}
+                btnTitle="Create Account"
                 handleNextStep={handleNextStep}
                 onSubmit={onSubmit}
                 cardTitle={item?.title}

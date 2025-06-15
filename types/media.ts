@@ -11,6 +11,17 @@ export interface Media {
   createdAt: string
   updatedAt: string
 }
+export interface MediaItem {
+  asset_id:string 
+  bytes:number
+  format:string
+  height:number
+  original_filename:string
+  public_id:string
+  url:string
+  version:number
+  width:number
+}
 
 export interface MediaCategory {
   id: string
@@ -49,7 +60,7 @@ export type ViewMode = "grid" | "list"
 export interface MediaFilters {
   search: string
   category: string
-  type: MediaType | "all"
+  // type: MediaType | "all"
   sortBy: "title" | "createdAt" | "category"
   sortOrder: "asc" | "desc"
 }

@@ -63,7 +63,7 @@ type OptionGroup = {
 
 type InputFieldProps<T extends FieldValues> = {
   form: UseFormReturn<T>
-  name: Path<T>
+  name: Path<T> | any
   fieldType: FieldType
   type?: string
   hidePLabel?:boolean;

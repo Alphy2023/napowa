@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from "react"
 import type {
   Role,
-  Resource,
   RoleFormData,
   RoleResponse,
   RoleFilters,
   PaginationParams,
-  RESOURCES
 } from "@/types/roles"
 import { ApiResponse } from "@/lib/api/client"
 import { roleApi } from "@/lib/api"

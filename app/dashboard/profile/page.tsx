@@ -3,8 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/hooks/use-toast"
+import { Tabs, TabsContent} from "@/components/ui/tabs"
 import { AccountSettings } from "@/components/dashboard/profile/account-settings"
 import { SecuritySettings } from "@/components/dashboard/profile/security-settings"
 import { ProfileSettings } from "@/components/dashboard/profile/profile-settings"
@@ -16,17 +15,7 @@ import { profilePageTabs } from "@/utils/tabs"
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile")
- const settingTabs: TabItem[] = [
-   
-    {
-      title:"Landing page",
-      id:"landing-page"
-    },
-    {
-      title:"Contact us page",
-      id:"contact-us-page"
-    },
-  ]
+ 
 
   return (
     <div className="space-y-6">

@@ -128,3 +128,8 @@ export const upcomingMockEvents: EventData[] = [
   ]
 
 export const COLORS: string[] = ["#5ECCE9", "#0A3161", "#FFD700", "#8B2323", "#FF8C00"]
+
+
+export const logoUrl: string = "https://napowa.vercel.app/images/napowwa-logo.png"
+export const companyName: string = "Napowa";
+export const supportEmail: string = "info@napowa.org"

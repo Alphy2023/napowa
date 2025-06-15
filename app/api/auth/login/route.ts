@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import axios from "axios";
 import { UAParser } from "ua-parser-js";
-import { generateOtp } from "@/utils/generateOtp";
+import { generateOTP } from "@/utils/generate-otp";
 
 
 // Get public IP using external service
@@ -98,54 +98,54 @@ function getReadableDevice(userAgentString: string) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { email, password } = body;
+  try {
+     const body = await req.json();
+    const { email, password } = body;
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-  if (!user) {
-    return NextResponse.json({ message: "Invalid credentials." }, { status: 404 });
-  }
+    if (!user) {
+      return NextResponse.json({ message: "Invalid credentials." }, { status: 404 });
+    }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return NextResponse.json({ message: "Invalid credentials." }, { status: 401 });
-  }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ message: "Invalid credentials." }, { status: 401 });
+    }
 
-  if (user?.twoFactorEnabled) {
-    const otp = generateOtp(); // 6-digit code
-    await sendOtpToEmail(user.email, otp);
-    await storeOtpInDBOrCache(user.id, otp); // e.g., Redis or Prisma Session
+    if (user?.twoFactorEnabled) {
+      const otp = generateOTP(); // 6-digit code
+      // await sendOtpToEmail(user.email, otp);
+      // await storeOtpInDBOrCache(user.id, otp); 
+      return NextResponse.json({
+        message: "Two-factor authentication required",
+        twoFactorRequired: true,
+        userId: user.id,
+      }, { status: 202 });
+    }
 
-    return NextResponse.json({
-      message: "Two-factor authentication required",
-      twoFactorRequired: true,
-      userId: user.id,
-    }, { status: 202 });
-  }
+    // Get detailed device and location info
+    const sessionData = await getLocationFromRequest(req);
 
-  // Get detailed device and location info
-  const sessionData = await getLocationFromRequest(req);
-
-  // Store session info in DB
-  await prisma.session.create({
-    data: {
-      userId: user.id,
-      device: sessionData.device,  // <-- nice readable device info here
-      ip: sessionData.ip,
-      location: JSON.stringify({
-        city: sessionData.city,
-        region: sessionData.region,
-        country: sessionData.country,
-        countryName: sessionData.countryName,
-        loc: sessionData.loc,
-        timezone: sessionData.timezone,
-      }),
-      isActive: true,
-    },
-  });
+    // Store session info in DB
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        device: sessionData.device,  // <-- nice readable device info here
+        ip: sessionData.ip,
+        location: JSON.stringify({
+          city: sessionData.city,
+          region: sessionData.region,
+          country: sessionData.country,
+          countryName: sessionData.countryName,
+          loc: sessionData.loc,
+          timezone: sessionData.timezone,
+        }),
+        isActive: true,
+      },
+    });
 
   const token = await encode({
     secret: process.env.NEXTAUTH_SECRET!,
@@ -157,6 +157,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json(
     {
+      success:true,
       message: "Welcome back. You are now logged in.",
       data: {
         token,
@@ -164,4 +165,14 @@ export async function POST(req: Request) {
     },
     { status: 201 }
   );
+  } catch (error) {
+    console.log("error login in:",error)
+     return NextResponse.json(
+    {
+      message: "Server error while loging in.",
+      success:false
+    },
+    { status: 500 }
+    );
+  }
 }

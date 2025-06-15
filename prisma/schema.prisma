@@ -11,390 +11,392 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  password String
-  roleId   String
-  role     Role     @relation(fields: [roleId], references: [id])
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  blogs             Blog[]
-  events            Event[]
-  sentMessages      Message[]           @relation("SentMessages")
-  receivedMessages  Message[]           @relation("ReceivedMessages")
-  groupMemberships  GroupMember[]
-  notifications     Notification[]
+  blogs               Blog[]
+  events              Event[]
+  sentMessages        Message[]            @relation("SentMessages")
+  receivedMessages    Message[]            @relation("ReceivedMessages")
+  groupMemberships    GroupMember[]
+  notifications       Notification[]
   meetingParticipants MeetingParticipant[]
-  notificationSetting UserNotificationSetting?
-  settings          UserSettings?
-  sessions          Session[]
-  pushSubscriptions PushSubscription[]
+  settings            UserSettings?
+  sessions            Session[]
 
-  profile UserProfile?
+  profile           UserProfile?
+  EventRegistration EventRegistration[]
 }
+
 model Role {
   id          String   @id @default(cuid())
   name        String   @unique
-  permissions Json     // JSON object like { "events": ["read", "create"], "blog": ["read"] }
+  permissions Json // JSON object like { "events": ["read", "create"], "blog": ["read"] }
   users       User[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model UserProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  firstName         String?
-  lastName          String?
-  phone             String?   @unique
-  idNumber          String?   @unique
-  county            String?
-  memberType        String?
-  rank              String?
-  station           String?
-  serviceNumber     String?
-  profileImage      String?
-  bio               String?             @db.Text
-  address           String?
-  city              String?
-  postalCode        String?
-  isEmailVerified   Boolean             @default(false)
-  lastLogin         DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
- 
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  firstName       String?
+  lastName        String?
+  phone           String?   @unique
+  idNumber        String?   @unique
+  county          String?
+  memberType      String?
+  rank            String?
+  station         String?
+  serviceNumber   String?
+  timezone        String?
+  language        String?
+  profileImage    Json?
+  bio             String?   @db.Text
+  address         String?
+  city            String?
+  postalCode      String?
+  socialLinks     Json? // Store social media links
+  skills          String[]
+  interests       String[]
+  education       Json? // Store education history
+  employment      Json? // Store employment history
+  status          String    @default("active") // active, inactive, pending
+  isEmailVerified Boolean   @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   user User @relation(fields: [userId], references: [id])
 }
+
 model Session {
-  id          String   @id @default(cuid())
-  user        User?     @relation(fields: [userId], references: [id])
-  userId      String
-  device      String?  // user-agent or device info
-  ip          String?  // IP address
-  location    Json?  // resolved location from IP (optional)
-  createdAt   DateTime @default(now())
-  lastActive  DateTime @updatedAt
-  isActive    Boolean  @default(true)
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String
+  device     String? // user-agent or device info
+  ip         String? // IP address
+  location   Json? // resolved location from IP (optional)
+  createdAt  DateTime @default(now())
+  lastActive DateTime @updatedAt
+  isActive   Boolean  @default(true)
 }
+
 model TwofactorOtp {
   id        String   @id @default(uuid())
-  userId    String
+  userId    String   @unique
   otp       String
   createdAt DateTime @default(now())
   expiresAt DateTime
 }
-
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String    @unique
+  token     String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
 
 model UserSettings {
-  id                String    @id @default(cuid())
-  emailNotifications Boolean   @default(true)
-  pushNotifications Boolean   @default(true)
-  darkMode          Boolean   @default(false)
-  language          String    @default("en")
-  timezone          String    @default("UTC")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String    @unique
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                        String  @id @default(cuid())
+  emailNotifications        Boolean @default(true)
+  pushNotifications         Boolean @default(true)
+  smsNotifications          Boolean @default(false)
+  eventReminders            Boolean @default(true)
+  donationReceipts          Boolean @default(true)
+  newsletterSubscription    Boolean @default(true)
+  announcementNotifications Boolean @default(true)
+  twoFactorEnabled          Boolean @default(false)
+  profileVisibility         String?
+  showEmailAddress          Boolean @default(false)
+  showPhoneNumber           Boolean @default(false)
+  allowDirectMessages       Boolean @default(true)
+  allowTagging              Boolean @default(false)
+
+  darkMode  Boolean  @default(false)
+  language  String   @default("en")
+  timezone  String   @default("UTC")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Member {
-  id                String              @id @default(cuid())
-  firstName         String
-  lastName          String
-  email             String              @unique
-  phone             String?
-  address           String?
-  city              String?
-  county            String?
-  postalCode        String?
-  memberType        String              // regular, associate, honorary
-  joinDate          DateTime            @default(now())
-  status            String              @default("active") // active, inactive, pending
-  bio               String?             @db.Text
-  profileImage      String?
-  socialLinks       Json?               // Store social media links
-  skills            String[]
-  interests         String[]
-  education         Json?               // Store education history
-  employment        Json?               // Store employment history
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  userId            String
-  eventRegistrations EventRegistration[]
-}
+
 model ContactUsSettings {
   id              String   @id @default(cuid()) // Unique ID for the settings entry
   pageTitle       String
   pageDescription String
   showFaqs        Boolean
   showConnect     Boolean
-  socialLinks     Json?    // Stores array of social links as JSONB
-  sections        Json     // Stores array of sections as JSONB
+  socialLinks     Json? // Stores array of social links as JSONB
+  sections        Json // Stores array of sections as JSONB
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
-model Enquiry {
-  id            String    @id @default(cuid())
-  firstname     String
-  lastname      String
-  phone         String
-  email         String 
-  subject       String
-  message       String   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
 
-  responses  EnquiryResponse[]
+model Gallery {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  album       String
+  tags        String?   // Can be stored as a comma-separated string or a JSON array if you prefer
+  isFeatured  Boolean   @default(false)
+  country     String
+  county      String
+  yearTaken   Int
+  media       Json      // Store CloudinaryImageData[] as JSON
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Enquiry {
+  id        String   @id @default(cuid())
+  firstname String
+  lastname  String
+  phone     String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  responses EnquiryResponse[]
+
   @@map("enquiries")
 }
+
 model EnquiryResponse {
-  id            String  @id @default(cuid())
-  message       String?
-  subject       String?
-  enquiryId     String
-  respondedBy   String?
-  enquiry       Enquiry?   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  
+  id          String   @id @default(cuid())
+  message     String?
+  subject     String?
+  enquiryId   String
+  respondedBy String?
+  enquiry     Enquiry? @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
   @@unique([enquiryId])
   @@map("enquiry_responses")
 }
 
 model Blog {
-  id                String    @id @default(cuid())
-  title             String
-  slug              String    @unique
-  content           String    @db.Text
-  excerpt           String?   @db.Text
-  featuredImage     String?
-  published         Boolean   @default(false)
-  publishedAt       DateTime?
-  category          String?
-  tags              String[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  author            User      @relation(fields: [authorId], references: [id])
-  authorId          String
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String    @db.Text
+  excerpt       String?   @db.Text
+  featuredImage String?
+  published     Boolean   @default(false)
+  publishedAt   DateTime?
+  category      String?
+  tags          String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
 }
 
 model Event {
-  id                String              @id @default(cuid())
-  title             String
-  slug              String              @unique
-  description       String              @db.Text
-  category          String?
-  location          String?
-  isVirtual         Boolean             @default(false)
-  meetingLink       String?
-  meetingId         String?
-  startDate         DateTime
-  endDate           DateTime
-  status            String              @default("upcoming") // upcoming, ongoing, completed, cancelled
-  featuredImage     String?
-  capacity          Int?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  organizer         User                @relation(fields: [organizerId], references: [id])
-  organizerId       String
-  registrations     EventRegistration[]
+  id            String              @id @default(cuid())
+  title         String
+  slug          String              @unique
+  description   String              @db.Text
+  category      String?
+  location      String?
+  isVirtual     Boolean             @default(false)
+  meetingLink   String?
+  meetingId     String?
+  startDate     DateTime
+  endDate       DateTime
+  status        String              @default("upcoming") // upcoming, ongoing, completed, cancelled
+  featuredImage String?
+  capacity      Int?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  organizer     User                @relation(fields: [organizerId], references: [id])
+  organizerId   String
+  registrations EventRegistration[]
 }
 
 model EventRegistration {
-  id                  String     @id @default(cuid())
+  id                  String   @id @default(cuid())
   firstName           String
   lastName            String
   email               String
   phone               String?
   organization        String?
-  specialRequirements String?    @db.Text
-  status              String     @default("confirmed") // confirmed, cancelled, attended
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  event               Event      @relation(fields: [eventId], references: [id])
+  specialRequirements String?  @db.Text
+  status              String   @default("confirmed") // confirmed, cancelled, attended
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  event               Event    @relation(fields: [eventId], references: [id])
   eventId             String
-  member              Member?    @relation(fields: [memberId], references: [id])
+  member              User?    @relation(fields: [memberId], references: [id])
   memberId            String?
 
   // --- New fields for ticketing ---
-  ticketId            String     @unique @default(cuid()) // Unique ID for the ticket itself
-  qrCodeData          String     @unique // The data encoded in the QR code (e.g., a URL or unique string)
+  ticketId   String @unique @default(cuid()) // Unique ID for the ticket itself
+  qrCodeData String @unique // The data encoded in the QR code (e.g., a URL or unique string)
   // ---------------------------------
 }
+
 model Donation {
-  id                String    @id @default(cuid())
-  amount            Float
-  currency          String    @default("KES")
-  paymentMethod     String    // mpesa, card, bank_transfer
-  transactionId     String?
-  status            String    @default("pending") // pending, completed, failed
-  donorName         String?
-  donorEmail        String?
-  donorPhone        String?
-  message           String?   @db.Text
-  anonymous         Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("KES")
+  paymentMethod String // mpesa, card, bank_transfer
+  transactionId String?
+  status        String   @default("pending") // pending, completed, failed
+  donorName     String?
+  donorEmail    String?
+  donorPhone    String?
+  message       String?  @db.Text
+  anonymous     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Volunteer {
-  id                String    @id @default(cuid())
-  firstName         String
-  lastName          String
-  email             String
-  phone             String?
-  skills            String[]
-  availability      String?
-  interests         String[]
-  experience        String?   @db.Text
-  status            String    @default("pending") // pending, approved, active, inactive
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String
+  phone        String?
+  skills       String[]
+  availability String?
+  interests    String[]
+  experience   String?  @db.Text
+  status       String   @default("pending") // pending, approved, active, inactive
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Partner {
-  id                String    @id @default(cuid())
-  name              String
-  email             String
-  phone             String?
-  organization      String
-  website           String?
-  partnerType       String    // corporate, ngo, government, individual
-  description       String?   @db.Text
-  logo              String?
-  status            String    @default("pending") // pending, approved, active, inactive
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  organization String
+  website      String?
+  partnerType  String // corporate, ngo, government, individual
+  description  String?  @db.Text
+  logo         String?
+  status       String   @default("pending") // pending, approved, active, inactive
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Announcement {
-  id                String    @id @default(cuid())
-  title             String
-  content           String    @db.Text
-  priority          String    @default("normal") // low, normal, high, urgent
-  startDate         DateTime  @default(now())
-  endDate           DateTime?
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  title     String
+  content   String    @db.Text
+  priority  String    @default("normal") // low, normal, high, urgent
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Message {
-  id                String    @id @default(cuid())
-  content           String    @db.Text
-  isRead            Boolean   @default(false)
-  sender            User      @relation("SentMessages", fields: [senderId], references: [id])
-  senderId          String
-  recipient         User      @relation("ReceivedMessages", fields: [recipientId], references: [id])
-  recipientId       String
-  group             Group?    @relation(fields: [groupId], references: [id])
-  groupId           String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    String
+  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId String
+  group       Group?   @relation(fields: [groupId], references: [id])
+  groupId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Group {
-  id                String        @id @default(cuid())
-  name              String
-  description       String?       @db.Text
-  isPrivate         Boolean       @default(false)
-  avatar            String?
-  members           GroupMember[]
-  messages          Message[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  name        String
+  description String?       @db.Text
+  isPrivate   Boolean       @default(false)
+  avatar      String?
+  members     GroupMember[]
+  messages    Message[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model GroupMember {
-  id                String    @id @default(cuid())
-  role              String    @default("member") // admin, moderator, member
-  user              User      @relation(fields: [userId], references: [id])
-  userId            String
-  group             Group     @relation(fields: [groupId], references: [id])
-  groupId           String
-  joinedAt          DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  role      String   @default("member") // admin, moderator, member
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, groupId])
 }
 
 model Notification {
-  id                String    @id @default(cuid())
-  type              String    // message, announcement, event, system
-  title             String
-  content           String
-  isRead            Boolean   @default(false)
-  link              String?
-  user              User      @relation(fields: [userId], references: [id])
-  userId            String
-  createdAt         DateTime  @default(now())
-}
-model UserNotificationSetting {
-  id                      String   @id @default(cuid())
-  userId                  String   @unique
-  emailNotifications      Boolean  @default(true)
-  smsNotifications        Boolean  @default(false)
-  pushNotifications       Boolean  @default(false)
-  eventReminders          Boolean  @default(true)
-  donationReceipts        Boolean  @default(true)
-  newsletterSubscription  Boolean  @default(true)
-  announcementNotifications Boolean @default(true)
-
-  user User? @relation(fields: [userId], references: [id])
-}
-model PushSubscription {
-  id           String   @id @default(uuid())
-  endpoint     String   @unique
-  keys         Json
-  userId       String
-  user         User?     @relation(fields: [userId], references: [id])
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  type      String // message, announcement, event, system
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  link      String?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
 }
 
 model Meeting {
-  id                String              @id @default(cuid())
-  title             String
-  description       String?             @db.Text
-  meetingLink       String
-  meetingId         String              @unique
-  password          String?
-  startTime         DateTime
-  endTime           DateTime?
-  status            String              @default("scheduled") // scheduled, ongoing, completed, cancelled
-  recordingUrl      String?
-  participants      MeetingParticipant[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id           String               @id @default(cuid())
+  title        String
+  description  String?              @db.Text
+  meetingLink  String
+  meetingId    String               @unique
+  password     String?
+  startTime    DateTime
+  endTime      DateTime?
+  status       String               @default("scheduled") // scheduled, ongoing, completed, cancelled
+  recordingUrl String?
+  participants MeetingParticipant[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 }
 
 model MeetingParticipant {
-  id                String    @id @default(cuid())
-  user              User      @relation(fields: [userId], references: [id])
-  userId            String
-  meeting           Meeting   @relation(fields: [meetingId], references: [id])
-  meetingId         String
-  role              String    @default("attendee") // host, co-host, attendee
-  joinTime          DateTime?
-  leaveTime         DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  meeting   Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId String
+  role      String    @default("attendee") // host, co-host, attendee
+  joinTime  DateTime?
+  leaveTime DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@unique([userId, meetingId])
 }
 
 model Analytics {
-  id                String    @id @default(cuid())
-  date              DateTime  @default(now())
-  pageViews         Int       @default(0)
-  uniqueVisitors    Int       @default(0)
-  newMembers        Int       @default(0)
-  activeMembers     Int       @default(0)
-  donations         Float     @default(0)
+  id                 String   @id @default(cuid())
+  date               DateTime @default(now())
+  pageViews          Int      @default(0)
+  uniqueVisitors     Int      @default(0)
+  newMembers         Int      @default(0)
+  activeMembers      Int      @default(0)
+  donations          Float    @default(0)
   eventRegistrations Int      @default(0)
-  data              Json
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  data               Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model LandingPageSlide {

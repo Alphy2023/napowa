@@ -1,32 +1,26 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Save } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { NotificationSettingsForm, NotificationSettingsSchema } from "@/schemas/notificationSettings.schema"
+import { Save, Loader2, AlertCircle } from "lucide-react"
 import { CustomAlert } from "@/components/CustomAlert"
-import { ApiResponse } from "@/lib/api/client"
-import { notificationApi } from "@/lib/api"
-import { FIELDTYPES } from "@/lib/utils"
-import { InputField } from "@/components/InputField"
 import { Form } from "@/components/ui/form"
-
-
+import { InputField } from "@/components/InputField"
+import { FIELDTYPES } from "@/lib/utils"
+import { useProfileSettings } from "@/hooks/useProfileSettings"
+import { notificationSettingsSchema, type NotificationSettingsValues } from "@/schemas/profile.schema"
 
 export const NotificationSettings = () => {
-  const { toast } = useToast()
-  const [error,setError] = React.useState<string>("");
-  
+  const [error, setError] = React.useState<string>("")
+  const { notificationSettings, loading, isSaving,
+     updateNotificationSettings } = useProfileSettings()
 
-  const form = useForm<NotificationSettingsForm>({
-    resolver: zodResolver(NotificationSettingsSchema),
+  const form = useForm<NotificationSettingsValues>({
+    resolver: zodResolver(notificationSettingsSchema),
     defaultValues: {
       emailNotifications: true,
       smsNotifications: false,
@@ -38,38 +32,44 @@ export const NotificationSettings = () => {
     },
   })
 
-  const { handleSubmit, watch, setValue,
-    formState: { isSubmitting:loading },
-    reset,
-   } = form
+  const { handleSubmit, reset } = form
 
-  const onSubmit = async (values: NotificationSettingsForm) => {
-   
-    const res: ApiResponse<NotificationSettingsForm> = await notificationApi.createOrUpdateNotificationSettings(values);
-         
+  // Update form values when notification settings are loaded
+  useEffect(() => {
+    if (notificationSettings) {
+      reset(notificationSettings)
+    }
+  }, [notificationSettings, reset])
+
+  const onSubmit = async (values: NotificationSettingsValues) => {
+    setError("")
+    const res = await updateNotificationSettings(values)
+
     if (!res?.success) {
-        toast({
-            title: "Error occurred.",
-            description: res?.message || res?.errors?.[0]?.message || "Something went wrong.",
-        });
-        setError(res?.message || res?.errors?.[0]?.message || "Something went wrong.");
-        return;
-        }
-        reset(res?.data || undefined); 
-        toast({
-        title: "Successful.",
-        description: res?.message,
-        });
-           
+      setError(res?.message || res?.errors?.[0]?.message || "Something went wrong.")
+      return
+    }
+
+    // Reset form with the returned data to ensure it reflects the server state
+    if (res.data) {
+      reset(res.data)
+    }
   }
 
-
-  // React.useEffect(()=>{
-
-  // },[])
-   
-
-  
+  if (loading && !notificationSettings) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Preferences</CardTitle>
+          <CardDescription>Manage how you receive notifications and updates.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading notification settings...</span>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>
@@ -93,14 +93,11 @@ export const NotificationSettings = () => {
                   form={form}
                   hidePLabel={true}
                   name={key}
-                  disabled={loading}
-                  // id={key}
+                  disabled={isSaving}
                   label={label}
                   description={desc}
                 />
-                
               ))}
-          
 
               <Separator />
               <h3 className="text-lg font-medium">Notification Types</h3>
@@ -116,29 +113,33 @@ export const NotificationSettings = () => {
                   form={form}
                   hidePLabel={true}
                   name={key}
-                  disabled={loading}
-                  // id={key}
+                  disabled={isSaving}
                   label={label}
                   description={desc}
                 />
               ))}
             </div>
 
-            {error && (
-                  <CustomAlert variant={"destructive"} text={error}/>
-              )}
-                        
+            {error && <CustomAlert variant={"destructive"} text={error} />}
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button type="submit"
-            loading={loading}>
-              
-              {loading? "Saving..." : (
-                  <>
+          <CardFooter className="flex justify-between">
+            <div>
+              {form.formState.isDirty && (
+                <p className="text-sm text-muted-foreground flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  You have unsaved changes
+                </p>
+              )}
+            </div>
+            <Button type="submit" loading={isSaving} disabled={!form.formState.isDirty}>
+              {isSaving ? (
+                "Saving..."
+              ) : (
+                <>
                   <Save className="mr-2 h-4 w-4" />
                   Save
-                  </>
-                  )}
+                </>
+              )}
             </Button>
           </CardFooter>
         </form>
@@ -146,5 +147,3 @@ export const NotificationSettings = () => {
     </Card>
   )
 }
-
-

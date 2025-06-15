@@ -102,6 +102,7 @@ export default function LoginPageContent() {
           handleNextStep={handleNextStep}
           onSubmit={onSubmit}
           cardTitle={"Login"}
+          btnTitle="Login"
           loading={loading}
           cardDescription={"Enter your credentials to access your account"}
           >

@@ -135,10 +135,10 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
   })
 
   // Get active members within the period
-  const activeMembers = await prisma.member.count({
+  const activeMembers = await prisma.userProfile.count({
     where: {
       status: "active",
-      joinDate: {
+      createdAt: {
         lte: endDate,
       },
     },
@@ -176,9 +176,9 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
   const months = generateMonthlyData(startDate, endDate, timeRange)
   const growth = await Promise.all(
     months.map(async ({ month, date }) => {
-      const count = await prisma.member.count({
+      const count = await prisma.userProfile.count({
         where: {
-          joinDate: {
+          createdAt: {
             lte: date,
           },
         },
@@ -222,11 +222,11 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
   )
 
   // Get status distribution for the period
-  const statusData = await prisma.member.groupBy({
+  const statusData = await prisma.userProfile.groupBy({
     by: ["status"],
     _count: true,
     where: {
-      joinDate: {
+      createdAt: {
         lte: endDate,
       },
     },
@@ -238,30 +238,30 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
   }))
 
   // Get member type distribution for the period
-  const typeData = await prisma.member.groupBy({
+  const typeData = await prisma.userProfile.groupBy({
     by: ["memberType"],
     _count: true,
     where: {
-      joinDate: {
+      createdAt: {
         lte: endDate,
       },
     },
   })
 
   const typeDistribution = typeData.map((item) => ({
-    name: item.memberType.charAt(0).toUpperCase() + item.memberType.slice(1),
+    name: item?.memberType?.charAt(0)?.toUpperCase() + item?.memberType?.slice(1),
     value: item._count,
   }))
 
   // Get county distribution for the period
-  const countyData = await prisma.member.groupBy({
+  const countyData = await prisma.userProfile.groupBy({
     by: ["county"],
     _count: true,
     where: {
       county: {
         not: null,
       },
-      joinDate: {
+      createdAt: {
         lte: endDate,
       },
     },
@@ -283,15 +283,15 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
 
   // Calculate average tenure (fixed approach)
   // Get all active members with their join dates
-  const activeMembers_withDates = await prisma.member.findMany({
+  const activeMembers_withDates = await prisma.userProfile.findMany({
     where: {
       status: "active",
-      joinDate: {
+      createdAt: {
         lte: endDate,
       },
     },
     select: {
-      joinDate: true,
+      createdAt: true,
     },
   })
 
@@ -299,7 +299,7 @@ async function getMemberAnalytics(timeRange: TimeRange): Promise<MemberAnalytics
   let avgTenure = 0
   if (activeMembers_withDates.length > 0) {
     const totalTenure = activeMembers_withDates.reduce((sum, member) => {
-      const tenureInYears = (endDate.getTime() - member.joinDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+      const tenureInYears = (endDate.getTime() - member.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
       return sum + tenureInYears
     }, 0)
     avgTenure = Math.round((totalTenure / activeMembers_withDates.length) * 10) / 10

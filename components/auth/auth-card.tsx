@@ -18,10 +18,12 @@ interface AuthCardProps{
     form:UseFormReturn<any>,
     handleNextStep?:()=>void;
     loading?:boolean;
+    btnTitle:string;
 }
 
 export const AuthCard = ({children,form,
      handleNextStep,loading=false,
+     btnTitle,
     authType, onSubmit,cardTitle,cardDescription
 }:AuthCardProps) => {
     const { formStep, totalSteps, nextStep, prevStep } = useAuthForm()
@@ -60,8 +62,9 @@ export const AuthCard = ({children,form,
                     ) : (
                         <Button type="submit" 
                         loading={loading}
+                        className="ml-auto"
                         onClick={form.handleSubmit(onSubmit)}>
-                        {authType.includes("signup") ? "Create Account" : "Login"}
+                        {btnTitle}
                         <Check className="ml-2 h-4 w-4" />
                         </Button>
                     )}

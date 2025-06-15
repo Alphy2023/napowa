@@ -2,10 +2,6 @@
 
 import type React from "react"
 import { usePathname } from "next/navigation"
-import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Logo } from "@/components/logo"
-import { useAuthContext } from "@/contexts/auth-context"
 import { NavbarRightContent } from "./navbar-right-content"
 import { useSession } from "next-auth/react"
 import { useUserStore } from "@/store/user.store"
@@ -14,12 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const NavbarSkeleton = () => (
   <div className="mb-6 hidden items-center justify-between rounded-lg bg-background p-4 shadow-sm lg:flex">
-    <div className="flex h-16 items-center justify-between px-4">
+    <div className="flex h-16 items-center justify-between px-4 w-full">
       <div className="flex items-center">
-        <Skeleton className="h-10 w-10 rounded-md" />
+        <Skeleton className="h-10 w-40 rounded-md" />
         
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 ml-auto justify-end">
         <Skeleton className="h-10 w-10 rounded-md" />
         <Skeleton className="h-10 w-10 rounded-md" />
         <div className="flex items-center gap-2">
@@ -47,13 +43,15 @@ export const DesktopHeader = () => {
 
   return (
     <div className="mb-6 hidden items-center justify-between rounded-lg bg-background p-4 shadow-sm lg:flex">
-      <h1 className="text-2xl font-bold">
+      {/* <h1 className="text-2xl font-bold">
       {pathname === "/dashboard"
           ? "Dashboard"
           : pathname?.split("/").pop()?.charAt(0).toUpperCase() + pathname.split("/").pop()?.slice(1)}
-      </h1>
+      </h1> */}
+      <div className="ml-auto">
+        <NavbarRightContent/>
+      </div>
 
-      <NavbarRightContent/>
   </div>
   )
 }

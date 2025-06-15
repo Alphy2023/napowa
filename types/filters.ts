@@ -5,3 +5,7 @@ export interface PageFilters {
   sortBy: "name" | "createdAt" | "userCount"
   sortOrder: "asc" | "desc"
 }
+export interface PaginationParams {
+  page: number
+  limit: number
+}

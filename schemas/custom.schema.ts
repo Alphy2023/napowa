@@ -9,4 +9,5 @@ export const phoneFieldSchema = z.string().min(1, "Phone number required").refin
   "Must be a valid phone number (e.g., 07XXXXXXXX, +254XXXXXXXXX, or international format)"
 );
 
-export const emailFieldSchema = z.string().min(1, "Email required").email("Must be a valid email address");
+export const emailFieldSchema = z.string().min(1, "Email required")
+.email("Please enter a valid email address.");

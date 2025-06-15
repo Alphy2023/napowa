@@ -29,6 +29,18 @@ export const apiConfigs: {
   'auth.signup': {
     POST: { method: 'POST', authRequired: false }, 
   },
+  'auth.forgotPassword': {
+    POST: { method: 'POST', authRequired: false }, 
+  },
+  'auth.resetPassword': {
+    POST: { method: 'POST', authRequired: false }, 
+  },
+  'auth.verifyOtp': {
+    POST: { method: 'POST', authRequired: false }, 
+  },
+  'auth.twoFactorAuth': {
+    POST: { method: 'POST', authRequired: false }, 
+  },
   'contactUs.settings': {
     GET: { method: 'GET', authRequired: false }, 
     POST: { method: 'POST', authRequired: true }, 
@@ -59,6 +71,19 @@ export const apiConfigs: {
   },
   'roles.update': {
     PUT: { method: 'PUT', authRequired: false },
+  },
+
+  'gallery.list': {
+    GET: { method: 'GET', authRequired: false },
+  },
+  'gallery.create': {
+    GET: { method: 'GET', authRequired: false },
+    POST: { method: 'POST', authRequired: false },
+  },
+  'gallery.manage': {
+    GET: { method: 'POST', authRequired: false },
+    PUT: { method: 'PUT', authRequired: false },
+    DELETE: { method: 'DELETE', authRequired: false },
   },
 };
 

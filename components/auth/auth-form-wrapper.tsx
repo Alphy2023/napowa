@@ -25,10 +25,13 @@ export default function AuthFormWrapper({children,pageTitle,description}:AuthFor
       className="mx-auto flex w-full flex-col justify-center
        space-y-6 sm:w-[450px]"
        >
-        <div className="flex flex-col items-center space-y-2 text-center">
-          <Link href="/">
+        <div className="flex flex-col items-center space-y-2 text-center
+        ">
+          <Link href="/"
+          className="dark:bg-white rounded-md">
 
             <Image src="/images/napowwa-logo.png?height=100&width=100"
+            
             alt="NAPOWA Logo" width={100} height={100} />
           </Link>
           <h1 className="text-3xl font-bold text-napowa-red">{pageTitle}</h1>

@@ -10,14 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const NavbarSkeleton = () => (
   <header className="fixed top-0 z-40 w-full border-b bg-background lg:hidden">
-    <div className="flex h-16 items-center justify-between px-4">
+    <div className="flex h-16 items-center justify-between px-4 w-full">
       <div className="flex items-center">
         <Skeleton className="h-10 w-10 rounded-md" />
         <div className="ml-3 flex items-center gap-2">
           <Skeleton className="h-10 w-10 rounded-md" />
         </div>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 ml-auto justify-end">
         <Skeleton className="h-10 w-10 rounded-md" />
         <Skeleton className="h-10 w-10 rounded-md" />
         <div className="flex items-center gap-2">

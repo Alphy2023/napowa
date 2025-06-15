@@ -2,7 +2,6 @@
 export interface CloudinaryUploadResult {
   url: string
   public_id: string
-  // Add any other metadata you need from Cloudinary
   asset_id?: string
   version?: number
   signature?: string
@@ -20,6 +19,7 @@ export interface CloudinaryUploadResult {
 
 // Define the structure for an image during the upload process
 export interface UploadingImage {
+  id?:string | number
   file: File
   preview: string
   progress: number

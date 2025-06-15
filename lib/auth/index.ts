@@ -28,7 +28,6 @@ export const authOptions: AuthOptions = {
             include: {
               profile:true,
               role:true,
-              members: true,
               blogs: true,
               events: true,
               sentMessages: true,
@@ -36,21 +35,18 @@ export const authOptions: AuthOptions = {
               groupMemberships: true,
               notifications: true,
               meetingParticipants: true,
-              notificationSetting: true,
               settings: true,
-              pushSubscriptions: true,
             },
           });
 
       return {
         id: user?.id,
         email: user?.email,
-        role: user?.role,
-        role: user.role.name,
-        permissions: user.role?.permissions || [],
+        // role: user?.role,
+        role: user?.role.name,
+        permissions: user?.role?.permissions || [],
         settings: user?.settings,
         profile:user?.profile,
-        notificationSetting: user?.notificationSetting,
       };
 
       },

@@ -3,8 +3,9 @@
 import { ContactFormPayload, ContactUsSettings } from "@/schemas/contactUs.schema";
 import { ApiResponse, useApiClient } from "./client";
 import { NotificationSettingsForm } from "@/schemas/notificationSettings.schema";
-import { LoginPayload, SignupPayload } from "@/schemas/auth.schema";
+import { ForgotPasswordPayload, LoginPayload, ResetPasswordRequestPayload, SignupPayload } from "@/schemas/auth.schema";
 import { Role, RoleFormData, RoleResponse } from "@/types/roles";
+import { GalleryItemResponse } from "@/types/gallery";
 
 // contact us api calls
   const apiClient = useApiClient();
@@ -152,6 +153,66 @@ export const authApi = {
       };
     }
   },
+  forgotPassword: async (
+    data: ForgotPasswordPayload
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.mutate.post<ForgotPasswordPayload>("auth.forgotPassword", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while sending reset instructions.",
+        status: 500,
+      };
+    }
+  },
+  resetPassword: async (
+    data: ResetPasswordRequestPayload
+  ): Promise<ApiResponse<ResetPasswordRequestPayload>> => {
+    try {
+      const response = await apiClient.mutate.post<ResetPasswordRequestPayload>("auth.resetPassword", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while resetting password.",
+        status: 500,
+      };
+    }
+  },
+  verifyOtp: async (
+    data: any
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.mutate.post<any>("auth.verifyOtp", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while verifying otp.",
+        status: 500,
+      };
+    }
+  },
+  twoFactorAuth: async (
+    data: any
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.mutate.post<any>("auth.twoFactorAuth", data);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while authenticating.",
+        status: 500,
+      };
+    }
+  },
   
 }
 // roles api
@@ -200,6 +261,22 @@ export const roleApi = {
         success: false,
         data: null,
         message: "An unexpected error occurred while updating role.",
+        status: 500,
+      };
+    }
+  },
+}
+export const galleryApi = {
+  // get gallery by id
+   getGalleryById: async (userId:string): Promise<ApiResponse<GalleryItemResponse>> => {
+    try {
+      const response = await apiClient.query<GalleryItemResponse>("gallery.manage",{},userId);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: "An unexpected error occurred while fetching media.",
         status: 500,
       };
     }
