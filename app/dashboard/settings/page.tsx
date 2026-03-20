@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import ScrollableTablist from "@/components/scrollable-tablist"
 import { LandingPageSettings } from "@/components/dashboard/settings/landing-page-settings"
 import { ContactUsPageSettings } from "@/components/dashboard/settings/contact-us-page-settings"
+import { AboutUsSettings } from "@/components/dashboard/settings/about-us-settings"
 import { settingsPageTabs } from "@/utils/tabs"
 
 
@@ -37,6 +38,10 @@ export default function SettingsPage() {
         {/* contact us page*/}
         <TabsContent value="contact-us-page" className="mt-6 space-y-6">
          <ContactUsPageSettings/>
+        </TabsContent>
+        {/* about us page*/}
+        <TabsContent value="about-us" className="mt-6 space-y-6">
+         <AboutUsSettings/>
         </TabsContent>
       </Tabs>
     </div>

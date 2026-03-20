@@ -523,3 +523,89 @@ model MpesaTransaction {
   @@index([createdAt])
   @@map("mpesa_transactions")
 }
+
+// About Us Page Models
+model AboutUsWelcomeNote {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  image       Json? // Cloudinary image data
+  content     String   @db.Text
+  isActive    Boolean  @default(true)
+  order       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_welcome_notes")
+}
+
+model AboutUsStory {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  content     String   @db.Text
+  image       Json? // Cloudinary image data
+  isActive    Boolean  @default(true)
+  order       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_stories")
+}
+
+model AboutUsMission {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String? // Icon name or Unicode
+  order       Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_missions")
+}
+
+model AboutUsValue {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String? // Icon name or Unicode
+  order       Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_values")
+}
+
+model AboutUsAchievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String? // Icon name or Unicode
+  metric      String? // e.g., "300+ Members"
+  order       Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_achievements")
+}
+
+model AboutUsTeamMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  bio         String   @db.Text
+  image       Json? // Cloudinary image data
+  email       String?
+  phone       String?
+  socialLinks Json? // Social media links
+  order       Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_us_team_members")
+}
