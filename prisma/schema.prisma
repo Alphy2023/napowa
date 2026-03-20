@@ -11,13 +11,28 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  roleId    String
-  role      Role     @relation(fields: [roleId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  password              String
+  roleId                String
+  role                  Role     @relation(fields: [roleId], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Authentication fields
+  isFirstLogin          Boolean  @default(true)
+  twoFactorEnabled      Boolean  @default(true) // Mandatory for all users
+  twoFactorVerified     Boolean  @default(false)
+  twoFactorSecret       String? // TOTP secret or email-based
+  lastTwoFactorAt       DateTime?
+  passwordChangedAt     DateTime?
+  createdByAdmin        String? // Track if created by admin
+  
+  // Session management
+  lastLoginAt           DateTime?
+  loginAttempts         Int      @default(0)
+  isLockedOut           Boolean  @default(false)
+  lockedUntil           DateTime?
 
   blogs               Blog[]
   events              Event[]
@@ -31,6 +46,11 @@ model User {
 
   profile           UserProfile?
   EventRegistration EventRegistration[]
+  donations         Donation[]
+  adminLogs         AdminLog[]           @relation("PerformedBy")
+  targetAdminLogs   AdminLog[]           @relation("TargetUser")
+  twoFactorOtps     TwoFactorOtp[]
+  mpesaTransactions MpesaTransaction[]
 }
 
 model Role {
@@ -87,19 +107,50 @@ model Session {
   isActive   Boolean  @default(true)
 }
 
-model TwofactorOtp {
+model TwoFactorOtp {
   id        String   @id @default(uuid())
-  userId    String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   otp       String
   createdAt DateTime @default(now())
   expiresAt DateTime
+  isUsed    Boolean  @default(false)
+
+  @@index([userId])
+  @@map("two_factor_otps")
 }
+
 model PasswordResetToken {
   id        String   @id @default(uuid())
-  userId    String    @unique
-  token     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
   createdAt DateTime @default(now())
   expiresAt DateTime
+  isUsed    Boolean  @default(false)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model AdminLog {
+  id            String   @id @default(cuid())
+  action        String   // "create_user", "delete_user", "modify_member", etc.
+  resourceType  String   // "user", "donation", "member", etc.
+  resourceId    String   // ID of the affected resource
+  changes       Json? // Object containing what was changed
+  performedBy   User     @relation("PerformedBy", fields: [performedById], references: [id])
+  performedById String
+  targetUser    User?    @relation("TargetUser", fields: [targetUserId], references: [id])
+  targetUserId  String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@index([performedById])
+  @@index([targetUserId])
+  @@index([createdAt])
+  @@map("admin_logs")
 }
 
 model UserSettings {
@@ -246,19 +297,38 @@ model EventRegistration {
 }
 
 model Donation {
-  id            String   @id @default(cuid())
-  amount        Float
-  currency      String   @default("KES")
-  paymentMethod String // mpesa, card, bank_transfer
-  transactionId String?
-  status        String   @default("pending") // pending, completed, failed
-  donorName     String?
-  donorEmail    String?
-  donorPhone    String?
-  message       String?  @db.Text
-  anonymous     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  amount                Float
+  currency              String   @default("KES")
+  paymentMethod         String // mpesa, card, bank_transfer
+  transactionId         String?  @unique
+  status                String   @default("pending") // pending, completed, failed, refunded
+  donorName             String?
+  donorEmail            String?
+  donorPhone            String?
+  donorId               String? // If logged in user
+  donor                 User?    @relation(fields: [donorId], references: [id], onDelete: SetNull)
+  message               String?  @db.Text
+  anonymous            Boolean  @default(false)
+  
+  // QR Code donation fields
+  qrCodeData            String? // Encrypted QR code data
+  qrCodeUrl             String? // URL to QR code image
+  qrCodeExpiry          DateTime?
+  paymentReference      String? // MPesa or Till reference
+  
+  // Security fields
+  encryptedPaymentData  String? // Encrypted sensitive payment info
+  checksum              String? // For integrity verification
+  
+  mpesaTransaction      MpesaTransaction? // Link to MPesa details
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([donorId])
+  @@index([transactionId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Volunteer {
@@ -410,4 +480,46 @@ model LandingPageSlide {
   secondaryButtonLink String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+model MpesaTransaction {
+  id                    String   @id @default(cuid())
+  donation              Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  donationId            String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String
+  
+  // Till/MPesa specific
+  tillNumber            String
+  checkoutRequestId     String?  @unique
+  mpesaReceiptNumber    String?  @unique
+  mpesaTransactionCode  String?  @unique
+  
+  // Transaction details
+  amount                Float
+  phoneNumber           String
+  status                String   @default("pending") // pending, completed, failed, expired
+  resultCode            Int?
+  resultDescription     String?
+  
+  // Callback data (encrypted)
+  encryptedCallbackData String?
+  
+  // Timing
+  initiatedAt           DateTime @default(now())
+  completedAt           DateTime?
+  expiresAt             DateTime
+  
+  // Retry logic
+  retryCount            Int      @default(0)
+  lastRetryAt           DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tillNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("mpesa_transactions")
 }
