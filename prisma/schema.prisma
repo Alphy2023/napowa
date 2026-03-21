@@ -51,6 +51,7 @@ model User {
   targetAdminLogs   AdminLog[]           @relation("TargetUser")
   twoFactorOtps     TwoFactorOtp[]
   mpesaTransactions MpesaTransaction[]
+  programs          Program[]
 }
 
 model Role {
@@ -236,42 +237,66 @@ model EnquiryResponse {
 }
 
 model Blog {
-  id            String    @id @default(cuid())
-  title         String
-  slug          String    @unique
-  content       String    @db.Text
-  excerpt       String?   @db.Text
-  featuredImage String?
-  published     Boolean   @default(false)
-  publishedAt   DateTime?
-  category      String?
-  tags          String[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  author        User      @relation(fields: [authorId], references: [id])
-  authorId      String
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  content        String    @db.Text // Rich HTML content from editor
+  excerpt        String?   @db.Text
+  featuredImage  Json? // Cloudinary image data
+  published      Boolean   @default(false)
+  publishedAt    DateTime?
+  category       String?
+  tags           String[]
+  media          Json? // Array of media items (images, videos)
+  views          Int       @default(0)
+  readTime       Int? // Estimated read time in minutes
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  author         User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId       String
+
+  @@index([published])
+  @@index([publishedAt])
+  @@index([category])
+  @@map("blogs")
 }
 
 model Event {
-  id            String              @id @default(cuid())
-  title         String
-  slug          String              @unique
-  description   String              @db.Text
-  category      String?
-  location      String?
-  isVirtual     Boolean             @default(false)
-  meetingLink   String?
-  meetingId     String?
-  startDate     DateTime
-  endDate       DateTime
-  status        String              @default("upcoming") // upcoming, ongoing, completed, cancelled
-  featuredImage String?
-  capacity      Int?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  organizer     User                @relation(fields: [organizerId], references: [id])
-  organizerId   String
-  registrations EventRegistration[]
+  id             String              @id @default(cuid())
+  title          String
+  slug           String              @unique
+  description    String              @db.Text // Rich HTML content from editor
+  category       String?
+  location       String?
+  coordinates    Json? // Latitude, Longitude for map
+  isVirtual      Boolean             @default(false)
+  meetingLink    String?
+  meetingId      String?
+  startDate      DateTime
+  endDate        DateTime
+  agenda         Json? // Array of agenda items {time, title, speaker, description}
+  speakers       Json? // Array of speaker objects {name, role, bio, image}
+  status         String              @default("upcoming") // upcoming, ongoing, completed, cancelled
+  featuredImage  Json? // Cloudinary image data
+  media          Json? // Array of media items (images, videos, documents)
+  capacity       Int?
+  registeredCount Int @default(0)
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organizer      User                @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  organizerId    String
+  registrations  EventRegistration[]
+
+  @@index([status])
+  @@index([startDate])
+  @@index([category])
+  @@map("events")
 }
 
 model EventRegistration {
@@ -285,7 +310,7 @@ model EventRegistration {
   status              String   @default("confirmed") // confirmed, cancelled, attended
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  event               Event    @relation(fields: [eventId], references: [id])
+  event               Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId             String
   member              User?    @relation(fields: [memberId], references: [id])
   memberId            String?
@@ -294,6 +319,71 @@ model EventRegistration {
   ticketId   String @unique @default(cuid()) // Unique ID for the ticket itself
   qrCodeData String @unique // The data encoded in the QR code (e.g., a URL or unique string)
   // ---------------------------------
+
+  @@map("event_registrations")
+}
+
+model ProgramCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?   @db.Text
+  icon        String? // Icon name
+  image       Json? // Category image from Cloudinary
+  color       String? // Hex color for UI
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  programs    Program[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+  @@map("program_categories")
+}
+
+model Program {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  shortDescription String? @db.Text
+  content         String   @db.Text // Rich HTML content from editor
+  category        ProgramCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId      String
+  featuredImage   Json? // Cloudinary image data
+  media           Json? // Array of media items
+  objectives      String[] // Array of program objectives
+  targetAudience  String?
+  startDate       DateTime?
+  endDate         DateTime?
+  duration        String? // e.g., "6 months", "3 weeks"
+  deliveryMode    String? // online, offline, hybrid
+  capacity        Int?
+  enrolledCount   Int @default(0)
+  location        String?
+  instructor      String? // Instructor name
+  instructorImage Json? // Instructor image
+  instructorBio   String? @db.Text
+  price           Float?
+  curriculum      Json? // Array of curriculum modules
+  testimonials    Json? // Array of testimonials
+  isActive        Boolean @default(true)
+  featured        Boolean @default(false)
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String?
+  views           Int @default(0)
+  order           Int @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById     String
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([featured])
+  @@index([order])
+  @@map("programs")
 }
 
 model Donation {
