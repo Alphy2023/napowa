@@ -1,11 +1,10 @@
-import type { Metadata } from "next"
-import BlogClientPage from "./BlogClientPage"
+import { BlogPage } from "@/components/blog/blog-page"
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Blog | NAPOWA",
-  description: "Read the latest news, stories, and updates from the National Police Wives Welfare Association.",
+  description: "Read our latest articles and updates",
 }
 
-export default function BlogPage() {
-  return <BlogClientPage />
+export default function Page() {
+  return <BlogPage />
 }

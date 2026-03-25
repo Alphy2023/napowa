@@ -3,36 +3,36 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { useEvents } from "@/hooks/use-events"
-import { EventsTable } from "@/components/dashboard/events/events-table"
-import { CreateEventDialog } from "@/components/dashboard/events/create-event-dialog"
+import { useBlogs } from "@/hooks/use-blogs"
+import { BlogsTable } from "@/components/dashboard/blogs/blogs-table"
+import { CreateBlogDialog } from "@/components/dashboard/blogs/create-blog-dialog"
 
-export default function EventsPage() {
+export default function BlogsPage() {
   const [page, setPage] = useState(1)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const { toast } = useToast()
 
-  const { events, pagination, isLoading, mutate } = useEvents(undefined, undefined, page)
+  const { blogs, pagination, isLoading, mutate } = useBlogs(undefined, undefined, page)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-          <p className="text-muted-foreground">Manage organization events and registrations</p>
+          <h1 className="text-3xl font-bold tracking-tight">Blog Posts</h1>
+          <p className="text-muted-foreground">Manage blog articles and content</p>
         </div>
-        <Button onClick={() => setOpenCreateDialog(true)}>Create Event</Button>
+        <Button onClick={() => setOpenCreateDialog(true)}>Create Blog</Button>
       </div>
 
-      <EventsTable
-        events={events}
+      <BlogsTable
+        blogs={blogs}
         isLoading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
         onRefresh={() => mutate()}
       />
 
-      <CreateEventDialog
+      <CreateBlogDialog
         open={openCreateDialog}
         onOpenChange={setOpenCreateDialog}
         onSuccess={() => {
@@ -40,7 +40,7 @@ export default function EventsPage() {
           setOpenCreateDialog(false)
           toast({
             title: "Success",
-            description: "Event created successfully",
+            description: "Blog created successfully",
           })
         }}
       />

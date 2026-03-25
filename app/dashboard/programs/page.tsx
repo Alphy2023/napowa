@@ -1,39 +1,69 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Search,
-  MoreHorizontal,
-  Filter,
-  Grid,
-  List,
-  Award,
-  Trash,
-  Eye,
-  Edit,
-  Plus,
-  Download,
-  Users,
-} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { usePrograms, useProgramCategories } from "@/hooks/use-programs"
+import { ProgramsTable } from "@/components/dashboard/programs/programs-table"
+import { CreateProgramDialog } from "@/components/dashboard/programs/create-program-dialog"
+import { ProgramCategoriesSidebar } from "@/components/dashboard/programs/program-categories-sidebar"
 
-// Sample programs data
-const programs = [
-  {
-    id: "1",
-    title: "Education Scholarship Program",
+export default function ProgramsPage() {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>()
+  const [page, setPage] = useState(1)
+  const [openCreateDialog, setOpenCreateDialog] = useState(false)
+  const { toast } = useToast()
+
+  const { programs, pagination, isLoading, mutate } = usePrograms(selectedCategoryId, page)
+  const { categories } = useProgramCategories()
+
+  return (
+    <div className="flex h-full gap-6">
+      {/* Categories Sidebar */}
+      <div className="w-64 border-r">
+        <ProgramCategoriesSidebar
+          categories={categories}
+          selectedId={selectedCategoryId}
+          onSelect={setSelectedCategoryId}
+          onCategoriesChange={() => mutate()}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Programs</h1>
+            <p className="text-muted-foreground">Manage all training programs and courses</p>
+          </div>
+          <Button onClick={() => setOpenCreateDialog(true)}>Create Program</Button>
+        </div>
+
+        <ProgramsTable
+          programs={programs}
+          isLoading={isLoading}
+          pagination={pagination}
+          onPageChange={setPage}
+          onRefresh={() => mutate()}
+        />
+
+        <CreateProgramDialog
+          open={openCreateDialog}
+          onOpenChange={setOpenCreateDialog}
+          categories={categories}
+          onSuccess={() => {
+            mutate()
+            setOpenCreateDialog(false)
+            toast({
+              title: "Success",
+              description: "Program created successfully",
+            })
+          }}
+        />
+      </div>
+    </div>
+  )
+}
     image: "/placeholder.svg?height=400&width=600",
     category: "Education",
     coordinator: "Jane Muthoni",

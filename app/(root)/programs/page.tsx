@@ -1,23 +1,13 @@
-import type { Metadata } from "next"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Briefcase, Heart, BookOpen, Users, Landmark, GraduationCap, ShieldCheck } from "lucide-react"
-import { PageTitle } from "@/components/page-title"
-import ScrollableTablist from "@/components/scrollable-tablist"
-import { HeroContent } from "@/components/hero-content"
+import { ProgramsPage } from "@/components/programs/programs-page"
 
-export const metadata: Metadata = {
-  title: "Our Programs | NAPOWA",
-  description:
-    "Explore the various programs offered by the National Police Wives Welfare Association to empower police wives and widows across Kenya.",
+export const metadata = {
+  title: "Programs | NAPOWA",
+  description: "Explore NAPOWA training programs and courses",
 }
 
-const programs = [
-  {
-    id: "skills-development",
+export default function Page() {
+  return <ProgramsPage />
+}
     title: "Skills Development",
     description:
       "Our skills development program provides training in various vocational skills to help police wives and widows become economically independent.",

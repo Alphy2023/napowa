@@ -7,33 +7,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")
-    const status = searchParams.get("status")
     const category = searchParams.get("category")
-    const search = searchParams.get("search")
+    const published = searchParams.get("published") === "true"
 
     const where: any = {}
-    if (status) where.status = status
+    if (published) where.published = true
     if (category) where.category = category
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ]
-    }
 
-    const [events, total] = await Promise.all([
-      prisma.event.findMany({
+    const [blogs, total] = await Promise.all([
+      prisma.blog.findMany({
         where,
-        include: { organizer: true },
+        include: { author: true },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { startDate: "desc" },
+        orderBy: { publishedAt: "desc" },
       }),
-      prisma.event.count({ where }),
+      prisma.blog.count({ where }),
     ])
 
     return NextResponse.json({
-      data: events,
+      data: blogs,
       pagination: {
         page,
         limit,
@@ -42,9 +35,8 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Events GET error:", error)
     return NextResponse.json(
-      { error: "Failed to fetch events" },
+      { error: "Failed to fetch blogs" },
       { status: 500 }
     )
   }
@@ -53,28 +45,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    const { title, description, startDate, endDate, organizerId, ...rest } = data
+    const { title, content, excerpt, category, tags, authorId, featuredImage } = data
 
     const slug = createSlug(title)
 
-    const event = await prisma.event.create({
+    const blog = await prisma.blog.create({
       data: {
         title,
         slug,
-        description,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        organizerId,
-        ...rest,
+        content,
+        excerpt,
+        category,
+        tags: tags || [],
+        featuredImage,
+        authorId,
       },
-      include: { organizer: true },
+      include: { author: true },
     })
 
-    return NextResponse.json(event, { status: 201 })
+    return NextResponse.json(blog, { status: 201 })
   } catch (error) {
-    console.error("[v0] Events POST error:", error)
     return NextResponse.json(
-      { error: "Failed to create event" },
+      { error: "Failed to create blog" },
       { status: 500 }
     )
   }
